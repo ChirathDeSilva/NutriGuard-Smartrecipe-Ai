@@ -1,0 +1,9 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+backend/data/*.db
+.DS_Store
+Api Keys.txt
+*.key
