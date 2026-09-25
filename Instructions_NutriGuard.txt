@@ -26,7 +26,8 @@ smartrecipe-ai/
 │       ├── api/
 │       │   ├── __init__.py
 │       │   ├── auth.py                  # User registration, login, and JWT issuance
-│       │   └── chat.py                  # POST /api/chat orchestrating the 5-agent pipeline
+│       │   ├── chat.py                  # POST /api/chat orchestrating the 5-agent pipeline
+│       │   └── tips.py                  # GET /api/tips & GET /api/tips/{id} for news & nutrition tips
 │       │
 │       ├── agents/
 │       │   ├── __init__.py
@@ -44,8 +45,8 @@ smartrecipe-ai/
 │       ├── db/
 │       │   ├── __init__.py
 │       │   ├── database.py              # SQLite engine, Base, and SessionLocal generator
-│       │   ├── models.py                # 11 SQLAlchemy relational table models
-│       │   └── schemas.py               # Pydantic v2 inter-agent validation contracts (DTOs)
+│       │   ├── models.py                # 12 SQLAlchemy relational table models (including NutritionTip)
+│       │   └── schemas.py               # Pydantic v2 inter-agent validation contracts & tips DTOs
 │       │
 │       └── services/
 │           ├── __init__.py
@@ -55,9 +56,11 @@ smartrecipe-ai/
 ├── frontend/
 │   ├── requirements.txt                 # Frontend dependencies (Streamlit, Plotly, requests)
 │   ├── app.py                           # Streamlit multi-turn chat UI & sidebar control widgets
+│   ├── pages/
+│   │   └── 1_📰_News_&_Nutrition_Tips.py # Interactive News & Nutrition Tips page
 │   └── components/
 │       ├── __init__.py
-│       ├── cards.py                     # Recipe card renderer with unique chart keys
+│       ├── cards.py                     # Recipe & tip card renderers with unique chart keys
 │       └── charts.py                    # Plotly macronutrient horizontal bar chart component
 │
 └── tests/
@@ -135,6 +138,7 @@ STEP 3: Create `backend/app/db/models.py`
   9. `SavedRecipe` (id, user_id FK, recipe_id FK, created_at)
   10. `Conversation` & `Message` (for chat history tracking)
   11. `AuditLog` (id, user_id, event_type, resource_type, status, created_at, metadata)
+  12. `NutritionTip` (id, title, summary, content, category, author, image_url, tags, is_published, created_at)
 
 STEP 4: Create and Run `backend/app/seed_db.py`
 - Call `Base.metadata.create_all(bind=engine)` to physically create `recipes.db`.
@@ -142,6 +146,10 @@ STEP 4: Create and Run `backend/app/seed_db.py`
 - Seed at least 2 authentic Sri Lankan recipes:
   * Recipe 1: "Sri Lankan Dhal Curry (Parippu)" [Vegan, Allergen-Free]
   * Recipe 2: "Spicy Pol Sambol" [Contains fish allergen: Maldive fish flakes]
+- Seed initial curated Recipe Nutrition Tips & Health News:
+  * Tip 1: "The Healing Power of Turmeric in Sri Lankan Cuisine" [Nutrition Tip]
+  * Tip 2: "Balancing Macronutrients: Sri Lankan Balanced Plate Method" [Nutrition Tip]
+  * News 1: "New Food Safety Guidelines for Common Allergens in 2026" [News Article]
 - Run `python -m backend.app.seed_db` to confirm database generation.
 
 ================================================================================
@@ -155,6 +163,7 @@ STEP 5: Create `backend/app/db/schemas.py`
   * `SafetyVerdict`: recipe_id, is_safe (bool), violations (List[str]).
   * `RankedRecipe`: recipe (CandidateRecipe), final_score (float), score_breakdown (Dict[str, float]).
   * `FinalAgentResponse`: recipe_title, score, why_selected, formatted_instructions, nutrition_facts, warnings, sources, score_breakdown.
+  * `NutritionTipResponse` & `NutritionTipCreate`: id, title, summary, content, category, author, image_url, tags, created_at.
 
 ================================================================================
 PHASE 4: CORE LOGIC (THE 5 AGENT MODULES)
@@ -205,8 +214,8 @@ STEP 11: Create `backend/app/core/security.py`
 - Add input sanitization (strip HTML, script tags, prompt injection tokens).
 - Add password hashing using passlib bcrypt and JWT token verification.
 
-STEP 12: Create `backend/app/api/chat.py`
-- Expose `POST /api/chat`.
+STEP 12: Create `backend/app/api/chat.py` & `backend/app/api/tips.py`
+- In `backend/app/api/chat.py`: Expose `POST /api/chat`.
 - Sequentially chain the 5 agents:
   1. constraints = query_agent.parse(request)
   2. candidates = await retrieval_agent.retrieve_candidates(constraints)
@@ -215,11 +224,14 @@ STEP 12: Create `backend/app/api/chat.py`
   4. best_recipe = ranking_agent.rank(safe_candidates, constraints)
   5. final_response = await response_agent.generate_response(best_recipe)
   6. Return final_response.
+- In `backend/app/api/tips.py`:
+  * Expose `GET /api/tips` with optional query params `category` ("news", "tip") and `tag`.
+  * Expose `GET /api/tips/{id}` to fetch full article/tip details.
 
 STEP 13: Create `backend/app/main.py`
 - Initialize FastAPI app instance.
 - Add `CORSMiddleware` (allow all origins, credentials, methods, headers).
-- Include router from `backend.app.api.chat`.
+- Include routers from `backend.app.api.chat` and `backend.app.api.tips`.
 - Add health-check endpoint `GET /`.
 
 ================================================================================
@@ -242,15 +254,21 @@ STEP 16: Create `frontend/components/cards.py`
 - Implement `render_recipe_card(data, card_key: str)`.
 - Display recipe title, match score, safety badge, selection explanation, and steps.
 - Mount the Plotly chart passing `key=f"chart_{card_key}"` to avoid duplicate ID errors.
+- Implement `render_tip_card(tip_data)` for rendering news and nutrition tips.
 
-STEP 17: Create `frontend/app.py`
-- Multi-turn chat using `st.chat_message` and `st.session_state.messages`.
-- Sidebar controls:
-  * Diet selectbox (None, vegan, vegetarian, keto, halal).
-  * Allergy multiselect (peanuts, dairy, fish, eggs, gluten).
-  * Prep time slider (10 to 60 mins) and calorie ceiling slider.
-- Chat input sends payload via `requests.post("http://127.0.0.1:8000/api/chat")`.
-- Render final response and interactive charts.
+STEP 17: Create `frontend/app.py` & `frontend/pages/1_📰_News_&_Nutrition_Tips.py`
+- In `frontend/app.py`:
+  * Multi-turn chat using `st.chat_message` and `st.session_state.messages`.
+  * Sidebar controls:
+    - Diet selectbox (None, vegan, vegetarian, keto, halal).
+    - Allergy multiselect (peanuts, dairy, fish, eggs, gluten).
+    - Prep time slider (10 to 60 mins) and calorie ceiling slider.
+  * Chat input sends payload via `requests.post("http://127.0.0.1:8000/api/chat")`.
+  * Render final response and interactive charts.
+- In `frontend/pages/1_📰_News_&_Nutrition_Tips.py`:
+  * Interactive magazine/feed UI displaying healthy cooking tips and food safety news.
+  * Category tabs: "All", "Nutrition Tips", "Food & Health News".
+  * Search bar & tag filters for instant local filtering.
 
 ================================================================================
 EXECUTION COMMANDS
