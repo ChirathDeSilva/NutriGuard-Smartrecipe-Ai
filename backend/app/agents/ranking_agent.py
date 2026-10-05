@@ -22,7 +22,7 @@ def calculate_ingredient_match(recipe_ingredients: List[str], available_ingredie
     Returns value between 0.0 and 1.0.
     """
     if not available_ingredients:
-        return 1.0  # If user didn't specify ingredient restrictions, treat as full match
+        return 0.5  # Neutral baseline when user didn't specify ingredient restrictions
 
     matched = 0
     recipe_text = " ".join(recipe_ingredients).lower()

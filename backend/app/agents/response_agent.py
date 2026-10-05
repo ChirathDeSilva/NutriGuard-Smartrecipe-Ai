@@ -57,7 +57,7 @@ async def generate_response(ranked: RankedRecipe) -> FinalAgentResponse:
         try:
             import google.generativeai as genai
             genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("gemini-3.8-flash")
 
             prompt = f"""
 You are NutriGuard AI, a food safety and culinary nutrition assistant.

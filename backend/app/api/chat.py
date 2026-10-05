@@ -19,7 +19,49 @@ from backend.app.db.schemas import UserQueryRequest, FinalAgentResponse
 from backend.app.core.security import sanitize_input
 from backend.app.agents import query_agent, retrieval_agent, safety_agent, ranking_agent, response_agent
 
+import re
+
 router = APIRouter(tags=["Chat & Recipe Pipeline"])
+
+KNOWN_DISH_INFO = {
+    "roti": (
+        "**Roti** (such as Sri Lankan Pol Roti) is a popular traditional flatbread made with wheat flour, "
+        "fresh grated coconut, diced onions, and salt, typically dry-toasted on a hot griddle. "
+        "It is traditionally eaten with spicy Pol Sambol, Lunu Miris, or rich curries."
+    ),
+    "pol roti": (
+        "**Pol Roti** is a quintessential Sri Lankan flatbread crafted from grated coconut, wheat flour, "
+        "green chilies, shallots, and salt. Crispy on the edges and soft inside, it is a staple breakfast and dinner dish."
+    ),
+    "hoppers": (
+        "**Hoppers** (Appa) are iconic bowl-shaped Sri Lankan pancakes made from fermented rice flour batter and coconut milk, "
+        "distinguished by a crisp golden lace edge and a soft, spongy, steaming center."
+    ),
+    "string hoppers": (
+        "**String Hoppers** (Idiyappam) are delicate steamed rice noodle nests, traditionally served with spicy "
+        "Kiri Hodi (coconut milk gravy), Pol Sambol, or meat curry."
+    ),
+    "pol sambol": (
+        "**Pol Sambol** is a vibrant, spicy, and tangy Sri Lankan coconut relish made by pounding freshly scraped coconut "
+        "with red chili powder, shallots, lime juice, and salt (traditionally enhanced with Maldive fish flakes)."
+    ),
+    "dhal": (
+        "**Dhal Curry** (Parippu) is a comforting, golden red lentil curry gently simmered in coconut milk, turmeric, "
+        "curry leaves, tempered mustard seeds, and garlic. It is the heart of every Sri Lankan meal."
+    ),
+    "dhal curry": (
+        "**Dhal Curry** (Parippu) is a comforting, golden red lentil curry gently simmered in coconut milk, turmeric, "
+        "curry leaves, tempered mustard seeds, and garlic. It is the heart of every Sri Lankan meal."
+    ),
+    "kottu": (
+        "**Kottu Roti** is Sri Lanka's ultimate street food sensation: chopped godamba flatbread stir-fried on an iron griddle "
+        "with vegetables, eggs, spices, and rich curry sauce."
+    ),
+    "chicken curry": (
+        "**Sri Lankan Chicken Curry** (Kukul Mas Curry) is deeply aromatic, cooked with roasted Ceylon curry powder, "
+        "pandan leaves, lemongrass, and rich coconut milk."
+    )
+}
 
 
 @router.post("/chat", response_model=FinalAgentResponse)
@@ -69,13 +111,25 @@ async def chat_pipeline(request: UserQueryRequest, db: Session = Depends(get_db)
         )
 
     if constraints.intent == "food_question":
-        # Conversational answer for culinary questions like 'what is roti' or 'tell me about hoppers'
-        food_query = request.prompt.lower().replace("what is", "").replace("what are", "").replace("tell me about", "").strip()
+        # Extract dish name from questions like 'what is roti' or 'tell me about hoppers'
+        clean_food = re.sub(r"^(?:what\s+is|what\s+are|tell\s+me\s+about|explain|describe)\s+", "", request.prompt.strip(), flags=re.IGNORECASE).rstrip("?.").strip()
+        clean_lower = clean_food.lower()
+
+        dish_desc = None
+        for key, desc in KNOWN_DISH_INFO.items():
+            if key in clean_lower:
+                dish_desc = desc
+                break
+
+        if not dish_desc:
+            dish_desc = (
+                f"**{clean_food.title()}** is a wonderful culinary dish. In NutriGuard AI, we help you prepare balanced, "
+                f"allergy-safe versions tailored to your nutritional preferences and available kitchen ingredients."
+            )
+
         answer = (
-            f"🍴 **About {food_query.title() if food_query else 'this dish'}:**\n\n"
-            f"**Roti** (such as Sri Lankan Pol Roti) is a popular traditional flatbread made with flour, fresh grated coconut, "
-            f"and a touch of salt, typically dry-toasted on a hot griddle. It is traditionally eaten with spicy Pol Sambol, "
-            f"Lunu Miris, or meat curries.\n\n"
+            f"🍴 **Culinary Guide: {clean_food.title() if clean_food else 'Dish Information'}**\n\n"
+            f"{dish_desc}\n\n"
             f"💡 *Would you like a healthy, allergy-safe recipe to make this at home? Tell me your preferred ingredients or dietary limits!*"
         )
         return FinalAgentResponse(

@@ -48,21 +48,27 @@ GREETING_PATTERNS = [
     r"^(?:who\s+are\s+you|what\s+can\s+you\s+do|help|what\s+is\s+nutriguard)\b"
 ]
 
-# Unrelated topics (tech, coding, politics, weather, finance, gaming, etc.)
+# Unrelated topics (tech, coding, politics, weather, finance, gaming, general non-food)
 UNRELATED_PATTERNS = [
-    r"\b(?:weather|forecast|rain|temperature)\b",
-    r"\b(?:stock|crypto|bitcoin|trading|forex|invest)\b",
-    r"\b(?:code|python|java|javascript|c\+\+|programming|bug|sql|html)\b",
-    r"\b(?:movie|film|song|music|actor|sports|football|cricket|game|gaming)\b",
-    r"\b(?:politics|president|election|war)\b",
-    r"\b(?:car|vehicle|repair|flight|hotel)\b"
+    r"\b(?:weather|forecast|rain|temperature|climate)\b",
+    r"\b(?:stock|stocks|crypto|bitcoin|trading|forex|invest|investment|finance|bank|money)\b",
+    r"\b(?:code|coding|python|java|javascript|c\+\+|programming|developer|software|bug|sql|html|css|react)\b",
+    r"\b(?:movie|movies|film|song|songs|music|actor|actress|sports|football|cricket|soccer|basketball|game|gaming|nba|fifa)\b",
+    r"\b(?:politics|president|election|minister|parliament|government|war|military|army)\b",
+    r"\b(?:car|cars|vehicle|repair|flight|flights|hotel|hotels|airline|airport)\b",
+    r"\b(?:math|calculus|algebra|physics|chemistry|homework|essay|history|geography|capital\s+of)\b",
+    r"\b(?:phone|computer|laptop|iphone|android|windows|hardware|wifi)\b",
+    r"\b(?:joke|riddle|story|poem|poetry)\b"
 ]
 
 # Culinary & recipe keywords
 CULINARY_KEYWORDS = {
-    "cook", "recipe", "curry", "dish", "make", "eat", "dinner", "lunch", "breakfast",
-    "ingredient", "ingredients", "spices", "chicken", "lentils", "dhal", "rice", "curry",
-    "sambol", "fish", "soup", "salad", "food", "calories", "bake", "fry", "boil"
+    "cook", "cooking", "recipe", "recipes", "curry", "dish", "dishes", "make", "eat", "eating",
+    "dinner", "lunch", "breakfast", "snack", "meal", "meals", "ingredient", "ingredients",
+    "spices", "chicken", "lentils", "dhal", "rice", "sambol", "fish", "soup", "salad", "food",
+    "calories", "bake", "baking", "fry", "frying", "boil", "boiling", "roti", "hoppers", "kottu",
+    "flour", "coconut", "vegetable", "vegetables", "meat", "beef", "pork", "shrimp", "seafood",
+    "vegan", "vegetarian", "nutrition", "diet"
 }
 
 # Stopwords/filler words that should not be parsed as ingredients
@@ -142,24 +148,14 @@ def parse_query(request: UserQueryRequest) -> StructuredConstraints:
     # --------------------------------------------------------------------------
     is_greeting = any(re.search(pat, prompt_lower) for pat in GREETING_PATTERNS)
     is_unrelated = any(re.search(pat, prompt_lower) for pat in UNRELATED_PATTERNS)
-    has_culinary = any(kw in prompt_lower for kw in CULINARY_KEYWORDS)
+    prompt_tokens = set(re.findall(r"\b[a-z]+\b", prompt_lower))
+    has_culinary = bool(prompt_tokens.intersection(CULINARY_KEYWORDS))
 
     # Detect conversational food questions (e.g. "what is roti", "tell me about hoppers", "what is pol sambol")
-    is_food_question = bool(re.search(r"^(?:what\s+is|what\s+are|tell\s+me\s+about|how\s+do\s+you\s+make|explain)\s+([a-zA-Z\s]+)", prompt_lower))
+    is_food_question = bool(re.search(r"^(?:what\s+is|what\s+are|tell\s+me\s+about|explain|describe)\s+([a-zA-Z\s]+)", prompt_lower))
 
-    if is_greeting and not has_culinary and not is_food_question:
-        return StructuredConstraints(
-            intent="greeting",
-            available_ingredients=[],
-            allergies=list(allergies_set),
-            diet_type=diet_type,
-            max_time_minutes=max_time,
-            max_calories=max_cal,
-            cuisine=cuisine,
-            servings=2
-        )
-
-    if is_unrelated and not has_culinary and not is_food_question:
+    # Priority 1: Unrelated questions (weather, python, stocks, cricket, etc.)
+    if is_unrelated and not has_culinary:
         return StructuredConstraints(
             intent="unrelated",
             available_ingredients=[],
@@ -171,9 +167,10 @@ def parse_query(request: UserQueryRequest) -> StructuredConstraints:
             servings=2
         )
 
-    if is_food_question:
+    # Priority 2: Casual greetings and bot capability inquiries
+    if is_greeting and not has_culinary:
         return StructuredConstraints(
-            intent="food_question",
+            intent="greeting",
             available_ingredients=[],
             allergies=list(allergies_set),
             diet_type=diet_type,
@@ -182,6 +179,21 @@ def parse_query(request: UserQueryRequest) -> StructuredConstraints:
             cuisine=cuisine,
             servings=2
         )
+
+    # Priority 3: Food knowledge questions (e.g., "what is roti", "tell me about hoppers")
+    if is_food_question and not is_unrelated:
+        # If user explicitly asks to cook/make a recipe, let it proceed to recipe search
+        if not any(w in prompt_lower for w in ["recipe for", "make for me", "give me a recipe", "how to cook"]):
+            return StructuredConstraints(
+                intent="food_question",
+                available_ingredients=[],
+                allergies=list(allergies_set),
+                diet_type=diet_type,
+                max_time_minutes=max_time,
+                max_calories=max_cal,
+                cuisine=cuisine,
+                servings=2
+            )
 
     # --------------------------------------------------------------------------
     # 5. Extract Ingredients via spaCy Noun Chunks

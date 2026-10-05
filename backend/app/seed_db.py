@@ -259,6 +259,67 @@ def seed_database():
                 unit=unit
             ))
 
+        # --- Recipe 4: Traditional Sri Lankan Pol Roti (Coconut Flatbread) ---
+        roti = Recipe(
+            title="Sri Lankan Pol Roti (Coconut Roti)",
+            description="Traditional rustic Sri Lankan flatbread made with wheat flour, freshly scraped coconut, and mild green chilies.",
+            cuisine="Sri Lankan",
+            meal_type="Breakfast",
+            cooking_minutes=20,
+            preparation_minutes=10,
+            servings=4,
+            instructions=(
+                "1. In a large bowl, mix wheat flour, scraped fresh coconut, chopped shallots, green chilies, and salt.\n"
+                "2. Gradually add warm water and knead into a soft, non-sticky dough ball.\n"
+                "3. Divide dough into 4 balls, flatten each into round discs about 1/4 inch thick.\n"
+                "4. Cook on a dry heavy pan or griddle on medium heat for 3-4 minutes on each side until golden brown spots appear.\n"
+                "5. Serve warm with spicy Lunu Miris, Pol Sambol, or Dhal curry."
+            ),
+            source_name="Local Knowledgebase",
+            source_type="local"
+        )
+        db.add(roti)
+        db.flush()
+
+        # Nutrition for Pol Roti
+        db.add(Nutrition(
+            recipe_id=roti.id,
+            calories=230.0,
+            protein_grams=6.0,
+            carbs_grams=34.0,
+            fat_grams=8.0,
+            fiber_grams=4.0,
+            sodium_mg=210.0,
+            per_serving=True,
+            is_estimated=False
+        ))
+
+        # Ingredients for Pol Roti
+        roti_ingredients = [
+            ("wheat flour", "wheat flour", 2.0, "cups"),
+            ("fresh grated coconut", "coconut", 1.0, "cup"),
+            ("red shallots", "shallots", 3.0, "pieces"),
+            ("green chilies", "chili", 2.0, "pieces"),
+            ("salt", "salt", 1.0, "tsp"),
+            ("warm water", "water", 0.75, "cup")
+        ]
+        for name, canonical, qty, unit in roti_ingredients:
+            db.add(RecipeIngredient(
+                recipe_id=roti.id,
+                ingredient_name=name,
+                canonical_ingredient=canonical,
+                quantity=qty,
+                unit=unit
+            ))
+
+        # Link Gluten allergen to Pol Roti (Wheat flour contains gluten)
+        db.add(RecipeAllergen(
+            recipe_id=roti.id,
+            allergen_id=allergen_records["gluten"].id,
+            confidence=1.0,
+            source="deterministic_rule"
+        ))
+
         # ==============================================================================
         # 5. Seed Recipe Nutrition Tips & Food Safety News
         # ==============================================================================

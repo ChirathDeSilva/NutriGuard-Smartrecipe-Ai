@@ -36,8 +36,8 @@ def test_ingredient_match_calculation():
     score_zero = calculate_ingredient_match(recipe_ingredients, ["beef", "pasta"])
     assert score_zero == 0.0
 
-    # 4. Empty search criteria defaults to 1.0
-    assert calculate_ingredient_match(recipe_ingredients, []) == 1.0
+    # 4. Empty search criteria defaults to 0.5 neutral baseline
+    assert calculate_ingredient_match(recipe_ingredients, []) == 0.5
 
 
 def test_time_match_calculation():
