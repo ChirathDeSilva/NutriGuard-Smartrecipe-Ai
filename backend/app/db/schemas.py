@@ -46,7 +46,7 @@ class CandidateRecipe(BaseModel):
     fat_grams: float = 0.0
     dietary_tags: List[str] = Field(default_factory=list)
     allergens: List[str] = Field(default_factory=list)
-    cuisine: str
+    cuisine: str = "International"
     popularity: float = 0.5
     source: str = "Local Knowledgebase"
 

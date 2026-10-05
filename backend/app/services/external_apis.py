@@ -49,10 +49,10 @@ def parse_themealdb_to_candidate_dict(meal: Dict[str, Any]) -> Dict[str, Any]:
             desc = f"{measure.strip()} {ing.strip()}" if measure and measure.strip() else ing.strip()
             ingredients.append(desc.lower())
 
-    instructions = meal.get("strInstructions", "Follow standard preparation steps.") or ""
-    title = meal.get("strMeal", "International Dish")
-    cuisine = meal.get("strArea", "International")
-    meal_id = f"mealdb_{meal.get('idMeal', '0')}"
+    instructions = meal.get("strInstructions") or "Follow standard preparation steps."
+    title = meal.get("strMeal") or "International Dish"
+    cuisine = meal.get("strArea") or "International"
+    meal_id = f"mealdb_{meal.get('idMeal') or '0'}"
 
     # External meals default conservative estimations:
     # 450 kcal, 22g protein, 45g carbs, 18g fat, 30 min cook time
