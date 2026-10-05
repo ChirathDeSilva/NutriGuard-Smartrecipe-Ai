@@ -4,6 +4,7 @@ FRONTEND COMPONENT: Recipe & Nutrition Tip Cards
 Renders formatted recipe recommendations, safety badges,
 breakdown indicators, and healthy nutrition tip cards.
 Enforces unique key assignment for embedded Plotly charts.
+Uses native Streamlit widgets for perfect dark/light theme compatibility.
 """
 
 from typing import Dict, Any
@@ -13,9 +14,10 @@ from frontend.components.charts import render_macro_chart
 
 def render_recipe_card(data: Dict[str, Any], card_key: str):
     """
-    Renders an interactive, polished recipe recommendation card containing:
+    Renders an interactive, polished recipe recommendation card using
+    native Streamlit components for seamless dark/light mode compatibility:
     - Match score & safety certification badge
-    - Quick macronutrient indicator pills
+    - Quick macronutrient indicator metrics
     - Why selected explanation from Agent 5
     - Formatted cooking steps
     - Plotly macronutrient distribution (with unique chart key)
@@ -28,7 +30,7 @@ def render_recipe_card(data: Dict[str, Any], card_key: str):
     instructions = data.get("formatted_instructions", "")
     nutrition_facts = data.get("nutrition_facts", {})
     warnings = data.get("warnings", [])
-    sources = data.get("sources", ["NutriGuard Culinary Knowledgebase"])
+    sources = data.get("sources", ["NutriGuard Knowledgebase"])
     breakdown = data.get("score_breakdown", {})
 
     # Extract macro details
@@ -39,58 +41,26 @@ def render_recipe_card(data: Dict[str, Any], card_key: str):
 
     source_label = sources[0] if sources else "NutriGuard Knowledgebase"
     is_local = "Local" in source_label
+    origin_badge = "🇱🇰 Authentic Sri Lankan" if is_local else "🌍 Global Cuisine"
 
-    # Header Card Container
-    st.markdown(
-        f"""
-        <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
-                    border: 1px solid #cbd5e1; border-radius: 12px; padding: 16px 20px; margin-bottom: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <div>
-                    <span style="background-color: {'#e0f2fe' if is_local else '#fef3c7'}; 
-                                 color: {'#0369a1' if is_local else '#b45309'}; 
-                                 font-size: 11px; font-weight: 700; text-transform: uppercase; 
-                                 padding: 3px 10px; border-radius: 999px; letter-spacing: 0.5px;">
-                        {'🇱🇰 Authentic Sri Lankan' if is_local else '🌍 Global Cuisine'}
-                    </span>
-                    <h2 style="margin: 6px 0 2px 0; color: #0f172a; font-size: 1.6rem; font-weight: 700;">
-                        🍲 {title}
-                    </h2>
-                </div>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <span style="background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; 
-                                 font-weight: 700; font-size: 13px; padding: 5px 12px; border-radius: 8px;">
-                        🛡️ 100% Allergen Safe
-                    </span>
-                    <span style="background-color: #4f46e5; color: #ffffff; 
-                                 font-weight: 800; font-size: 14px; padding: 5px 14px; border-radius: 8px;">
-                        {score_pct}% Match
-                    </span>
-                </div>
-            </div>
-            
-            <!-- Quick Macro Pills Row -->
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px;">
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #334155;">
-                    🔥 <strong>{cals}</strong> kcal
-                </div>
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #166534;">
-                    💪 <strong>{protein}g</strong> Protein
-                </div>
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #0284c7;">
-                    🌾 <strong>{carbs}g</strong> Carbs
-                </div>
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #d97706;">
-                    🥑 <strong>{fat}g</strong> Fats
-                </div>
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 12px; color: #64748b; margin-left: auto;">
-                    📍 Source: <em>{source_label}</em>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Header title and origin metadata
+    st.markdown(f"### 🍲 {title}")
+    st.caption(f"**Cuisine:** `{origin_badge}` &nbsp;|&nbsp; 📍 **Source:** `{source_label}`")
+
+    # Native Metric Cards Row (Works perfectly in Dark & Light themes)
+    c1, c2, c3, c4, c5, c6 = st.columns([1.2, 1.2, 1.2, 1.2, 1.2, 1.8])
+    with c1:
+        st.metric(label="Match", value=f"{score_pct}%")
+    with c2:
+        st.metric(label="Calories", value=f"{cals} kcal")
+    with c3:
+        st.metric(label="Protein", value=f"{protein}g")
+    with c4:
+        st.metric(label="Carbs", value=f"{carbs}g")
+    with c5:
+        st.metric(label="Fats", value=f"{fat}g")
+    with c6:
+        st.success("🛡️ 100% Allergen Safe")
 
     # Why Selected Callout Box
     st.info(f"{why_selected}")
@@ -111,14 +81,14 @@ def render_recipe_card(data: Dict[str, Any], card_key: str):
         st.markdown(instructions)
 
     with tab_nutrition:
-        c_left, c_right = st.columns([1.4, 1.0])
-        with c_left:
+        col_chart, col_summary = st.columns([1.4, 1.0])
+        with col_chart:
             if nutrition_facts:
                 fig = render_macro_chart(nutrition_facts)
                 st.plotly_chart(fig, use_container_width=True, key=f"chart_{card_key}")
             else:
                 st.write("Macronutrient breakdown not available.")
-        with c_right:
+        with col_summary:
             st.markdown("##### 🥗 Macro Summary")
             st.markdown(
                 f"""
@@ -154,23 +124,8 @@ def render_tip_card(tip: Dict[str, Any]):
 
     badge = "🌿 Nutrition Tip" if category == "tip" else "📢 Food Safety News"
 
-    st.markdown(
-        f"""
-        <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <div style="margin-bottom: 10px;">
-                <span style="background-color: {'#dcfce7' if category == 'tip' else '#fee2e2'}; 
-                             color: {'#166534' if category == 'tip' else '#991b1b'}; 
-                             font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 999px;">
-                    {badge}
-                </span>
-            </div>
-            <h3 style="margin: 8px 0; color: #0f172a; font-weight: 700;">{title}</h3>
-            <p style="color: #475569; font-size: 14px; font-style: italic; margin-bottom: 12px;">{summary}</p>
-            <p style="color: #334155; font-size: 15px; line-height: 1.6;">{content}</p>
-            <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b;">
-                <strong>Author:</strong> {author} &nbsp;|&nbsp; <strong>Tags:</strong> {tags}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown(f"#### {badge}: {title}")
+    st.caption(f"_{summary}_")
+    st.markdown(content)
+    st.caption(f"**Author:** {author} | **Tags:** {tags}")
+    st.divider()

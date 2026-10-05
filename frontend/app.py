@@ -86,21 +86,21 @@ st.markdown(
 
 # Hero Header Banner
 st.markdown(
-    """
-    <div class="hero-banner">
-        <h1 class="hero-title">🛡️ NutriGuard AI</h1>
-        <div class="hero-subtitle">
-            Agentic Culinary Nutrition, 100% Deterministic Allergen Guardrails & Personalized Recipe Intelligence
-        </div>
-        <div>
-            <span class="agent-pill">🧠 1. NLP Query Agent</span>
-            <span class="agent-pill">📚 2. BM25 & TheMealDB Retrieval</span>
-            <span class="agent-pill">🛡️ 3. Zero-LLM Safety Guardrail</span>
-            <span class="agent-pill">⚖️ 4. Multi-Factor Ranking</span>
-            <span class="agent-pill">👨‍🍳 5. Grounded Gemini Chef</span>
-        </div>
+"""
+<div class="hero-banner">
+    <h1 class="hero-title">🛡️ NutriGuard AI</h1>
+    <div class="hero-subtitle">
+        Agentic Culinary Nutrition, 100% Deterministic Allergen Guardrails & Personalized Recipe Intelligence
     </div>
-    """,
+    <div>
+        <span class="agent-pill">🧠 1. NLP Query Agent</span>
+        <span class="agent-pill">📚 2. BM25 & TheMealDB Retrieval</span>
+        <span class="agent-pill">🛡️ 3. Zero-LLM Safety Guardrail</span>
+        <span class="agent-pill">⚖️ 4. Multi-Factor Ranking</span>
+        <span class="agent-pill">👨‍🍳 5. Grounded Gemini Chef</span>
+    </div>
+</div>
+""",
     unsafe_allow_html=True
 )
 
