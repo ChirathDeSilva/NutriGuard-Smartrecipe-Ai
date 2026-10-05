@@ -5,6 +5,15 @@ Displays curated healthy recipes, nutrition advice, and food safety news
 fetched dynamically from the backend REST API (GET /api/tips).
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Ensure root directory is in sys.path
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import streamlit as st
 import requests
 from frontend.components.cards import render_tip_card
