@@ -87,11 +87,13 @@ Please provide an authentic, safe recipe in JSON format with exactly these keys:
 Respond with ONLY valid JSON.
 """
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-3.8-flash")
-        resp = model.generate_content(prompt)
-        text = resp.text.strip()
+        from google import genai
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+        text = response.text.strip()
         if text.startswith("```"):
             text = text.strip("`")
             if text.startswith("json"):

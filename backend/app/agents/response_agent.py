@@ -67,9 +67,9 @@ async def generate_response(ranked: RankedRecipe) -> FinalAgentResponse:
     # Try calling Google Gemini if API key is present
     if GEMINI_API_KEY and not GEMINI_API_KEY.startswith("your_"):
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel("gemini-3.8-flash")
+            from google import genai
+            from google.genai import types as genai_types
+            client = genai.Client(api_key=GEMINI_API_KEY)
 
             prompt = f"""
 You are NutriGuard AI, a food safety and culinary nutrition assistant.
@@ -97,7 +97,10 @@ Respond strictly in JSON format with two keys:
   "formatted_instructions": "..."
 }}
 """
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
             text = response.text.strip()
             # Clean possible markdown JSON wrappers
             if text.startswith("```"):
