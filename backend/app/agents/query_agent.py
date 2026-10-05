@@ -11,7 +11,7 @@ Extracts structured constraints from conversational user prompts:
 
 import re
 import spacy
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from backend.app.db.schemas import UserQueryRequest, StructuredConstraints
 
 # Load spaCy NLP pipeline
@@ -77,17 +77,77 @@ IGNORE_WORDS = {
     "quick", "fast", "healthy", "meal", "something", "want", "have", "cook",
     "make", "give", "minutes", "mins", "calories", "kcal", "time", "sri lankan",
     "i", "me", "my", "we", "under", "about", "around", "less", "more", "need",
-    "hi", "hello", "hey", "please", "can", "you", "tell", "show"
+    "hi", "hello", "hey", "please", "can", "you", "tell", "show",
+    "it", "this", "that", "them", "these", "those", "how", "what", "which",
+    "where", "who", "whom", "why", "way", "to", "do", "does", "did", "is",
+    "are", "was", "were", "be", "been", "being", "have", "has", "had",
+    "with", "without", "for", "of", "in", "on", "at", "by", "from", "the",
+    "a", "an", "step", "steps", "instructions", "prepare"
 }
+
+
+def resolve_context_dish(conversation_history: List[Dict[str, Any]]) -> Optional[str]:
+    """
+    Extracts the most recently discussed culinary dish from conversation history.
+    Searches both recent assistant culinary guides/recommendations and user food queries.
+    """
+    if not conversation_history:
+        return None
+
+    for msg in reversed(conversation_history[-5:]):
+        content = str(msg.get("content", ""))
+
+        # 1. Match from "Culinary Guide: <Dish>" header
+        guide_match = re.search(r"Culinary Guide:\s*([A-Za-z\s]+)", content, re.IGNORECASE)
+        if guide_match:
+            dish = guide_match.group(1).strip()
+            if dish and dish.lower() not in {"recipe information", "dish information"}:
+                return dish
+
+        # 2. Match from "**<Dish>** is a..." pattern
+        bold_match = re.search(r"\*\*([A-Za-z\s]+)\*\*\s+(?:is|are)\b", content, re.IGNORECASE)
+        if bold_match:
+            dish = bold_match.group(1).strip()
+            if 0 < len(dish.split()) <= 4 and dish.lower() not in {"this dish", "recipe information", "nutriguard ai"}:
+                return dish
+
+        # 3. Match from user query: "what is <dish>" or "tell me about <dish>"
+        user_food_match = re.search(r"^(?:what\s+is|what\s+are|tell\s+me\s+about|explain)\s+([A-Za-z\s]+)", content, re.IGNORECASE)
+        if user_food_match:
+            dish = user_food_match.group(1).strip()
+            if dish:
+                return dish
+
+        # 4. Match from recipe recommendation: "Recommended Recipe: <Title>"
+        recipe_title_match = re.search(r"(?:Recommended Recipe:|Title:)\s*([A-Za-z\s\(\)]+)", content, re.IGNORECASE)
+        if recipe_title_match:
+            dish = recipe_title_match.group(1).strip()
+            if dish:
+                return dish
+
+    return None
 
 
 def parse_query(request: UserQueryRequest) -> StructuredConstraints:
     """
     Parses a UserQueryRequest into a StructuredConstraints object using NLP and regex.
-    Combines user prompt text with sidebar widget selections.
+    Combines user prompt text with sidebar widget selections and multi-turn context.
     """
     prompt = request.prompt.strip()
     prompt_lower = prompt.lower()
+
+    # Multi-turn Context Resolution: Check if prompt refers to a previously discussed dish
+    has_pronoun_reference = bool(re.search(r"\b(?:it|this|that|them|same|the dish)\b", prompt_lower))
+    is_asking_how = bool(re.search(r"\b(?:how\s+to\s+make|how\s+do\s+you\s+make|how\s+can\s+i\s+make|how\s+do\s+i\s+make|how\s+to\s+cook|recipe\s+for|make\s+it|cook\s+it|prepare\s+it)\b", prompt_lower))
+
+    context_dish: Optional[str] = None
+    if (has_pronoun_reference or is_asking_how) and request.conversation_history:
+        context_dish = resolve_context_dish(request.conversation_history)
+        if context_dish:
+            # Substitute pronoun with actual dish name in prompt
+            prompt_lower = re.sub(r"\b(?:it|this|that|them|the dish)\b", context_dish.lower(), prompt_lower)
+            if context_dish.lower() not in prompt_lower:
+                prompt_lower = f"{prompt_lower} {context_dish.lower()}"
 
     # --------------------------------------------------------------------------
     # 1. Regex Extraction: Cooking Time Limit
@@ -199,7 +259,7 @@ def parse_query(request: UserQueryRequest) -> StructuredConstraints:
     # 5. Extract Ingredients via spaCy Noun Chunks
     # --------------------------------------------------------------------------
     available_ingredients: List[str] = []
-    doc = nlp(prompt)
+    doc = nlp(prompt_lower)
 
     for chunk in doc.noun_chunks:
         chunk_clean = chunk.text.lower().strip()
@@ -215,6 +275,12 @@ def parse_query(request: UserQueryRequest) -> StructuredConstraints:
             if ingredient_candidate not in allergies_set and ingredient_candidate not in KNOWN_DIET_TERMS:
                 if ingredient_candidate not in available_ingredients:
                     available_ingredients.append(ingredient_candidate)
+
+    # Ensure context-resolved dish is included in search candidates
+    if context_dish:
+        clean_ctx = context_dish.lower().strip()
+        if clean_ctx not in [i.lower() for i in available_ingredients]:
+            available_ingredients.append(clean_ctx)
 
     return StructuredConstraints(
         intent="recipe_search",

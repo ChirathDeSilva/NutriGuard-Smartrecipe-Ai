@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class UserQueryRequest(BaseModel):
     user_id: Optional[int] = 1
     prompt: str = Field(..., max_length=500, description="Raw user prompt capped at 500 characters")
+    conversation_history: List[Dict[str, Any]] = Field(default_factory=list, description="Recent conversation turns for context resolution")
     dietary_preferences: List[str] = Field(default_factory=list)
     allergies: List[str] = Field(default_factory=list)
     max_cooking_time: Optional[int] = None

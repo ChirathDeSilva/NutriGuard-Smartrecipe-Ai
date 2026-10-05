@@ -69,4 +69,24 @@ assert r10.status_code == 200
 assert 'Chicken' not in r10.json()['recipe_title']
 print(f"10. [PASS] Vegan Filter -> Recommended safe vegan recipe: {r10.json()['recipe_title']}")
 
-print("\n*** ALL 10 DIVERSE REAL-WORLD INPUTS VALIDATED AND CONFIRMED 100% ACCURATE! ***")
+# 11. Multi-Turn Anaphora Context: "what is kottu" -> "how to make it"
+r11_guide = client.post('/api/chat', json={'prompt': 'what is kottu'})
+assert r11_guide.status_code == 200 and r11_guide.json()['response_type'] == 'conversational'
+r11 = client.post('/api/chat', json={
+    'prompt': 'how to make it',
+    'conversation_history': [
+        {'role': 'user', 'content': 'what is kottu'},
+        {'role': 'assistant', 'content': r11_guide.json()['message']}
+    ]
+})
+assert r11.status_code == 200 and r11.json()['response_type'] == 'recipe_recommendation'
+assert 'Kottu' in r11.json()['recipe_title']
+print(f"11. [PASS] Multi-Turn Anaphora ('how to make it' after 'what is kottu') -> {r11.json()['recipe_title']}")
+
+# 12. Direct Authentic Dish Search: Hoppers
+r12 = client.post('/api/chat', json={'prompt': 'how to make hoppers'})
+assert r12.status_code == 200 and r12.json()['response_type'] == 'recipe_recommendation'
+assert 'Hoppers' in r12.json()['recipe_title']
+print(f"12. [PASS] Authentic Dish Search ('how to make hoppers') -> {r12.json()['recipe_title']}")
+
+print("\n*** ALL 12 DIVERSE REAL-WORLD INPUTS VALIDATED AND CONFIRMED 100% ACCURATE! ***")

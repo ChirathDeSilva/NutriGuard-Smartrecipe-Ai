@@ -150,9 +150,18 @@ if user_prompt:
     diet_param = [diet_choice] if diet_choice != "None" else []
     cuisine_param = cuisine_pref if cuisine_pref != "Any" else None
 
+    # Prepare previous message history for context resolution (exclude current prompt)
+    history_payload = []
+    for m in st.session_state.messages[:-1][-6:]:
+        c_text = m.get("content")
+        if isinstance(c_text, dict):
+            c_text = f"Recommended Recipe: {c_text.get('recipe_title', '')}"
+        history_payload.append({"role": m.get("role", "user"), "content": str(c_text)})
+
     payload = {
         "user_id": 1,
         "prompt": user_prompt,
+        "conversation_history": history_payload,
         "dietary_preferences": diet_param,
         "allergies": selected_allergies,
         "max_cooking_time": max_time,

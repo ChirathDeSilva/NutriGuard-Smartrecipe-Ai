@@ -50,6 +50,73 @@ def get_local_recipes_as_candidates(db: Session) -> List[CandidateRecipe]:
     return candidates
 
 
+import os
+import json
+from dotenv import load_dotenv
+from typing import List, Optional
+
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+
+async def synthesize_recipe_gemini(constraints: StructuredConstraints) -> Optional[CandidateRecipe]:
+    """
+    Synthesizes an authentic recipe using Gemini when neither local DB nor TheMealDB
+    contains a matching recipe for the requested dish/ingredients.
+    """
+    if not GEMINI_API_KEY or GEMINI_API_KEY.startswith("your_"):
+        return None
+
+    query_str = ", ".join(constraints.available_ingredients)
+    cuisine_hint = constraints.cuisine or "Sri Lankan or International"
+    prompt = f"""
+You are a master culinary chef and nutritionist. The user wants to prepare: '{query_str}' ({cuisine_hint}).
+Please provide an authentic, safe recipe in JSON format with exactly these keys:
+{{
+  "title": "Dish Title",
+  "ingredients": ["ingredient 1 with quantity", "ingredient 2 with quantity"],
+  "instructions": "1. Step one.\\n2. Step two.\\n3. Step three.",
+  "cooking_minutes": 25,
+  "calories": 350.0,
+  "protein_grams": 15.0,
+  "carbs_grams": 40.0,
+  "fat_grams": 10.0,
+  "allergens": ["gluten"] (or empty list if none),
+  "cuisine": "{cuisine_hint}"
+}}
+Respond with ONLY valid JSON.
+"""
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel("gemini-3.8-flash")
+        resp = model.generate_content(prompt)
+        text = resp.text.strip()
+        if text.startswith("```"):
+            text = text.strip("`")
+            if text.startswith("json"):
+                text = text[4:].strip()
+        data = json.loads(text)
+        return CandidateRecipe(
+            id=f"gen_{abs(hash(data.get('title', 'custom')))}",
+            title=data.get("title", f"Custom {query_str.title()}"),
+            ingredients=data.get("ingredients", constraints.available_ingredients),
+            instructions=data.get("instructions", "Cook thoroughly and enjoy!"),
+            cooking_minutes=int(data.get("cooking_minutes", 30)),
+            calories=float(data.get("calories", 400.0)),
+            protein_grams=float(data.get("protein_grams", 15.0)),
+            carbs_grams=float(data.get("carbs_grams", 45.0)),
+            fat_grams=float(data.get("fat_grams", 12.0)),
+            allergens=data.get("allergens", []),
+            cuisine=data.get("cuisine", cuisine_hint),
+            popularity=0.85,
+            source="NutriGuard AI Chef (Gemini Verified)"
+        )
+    except Exception as e:
+        print(f"[RETRIEVAL AGENT GEMINI FALLBACK] {e}")
+        return None
+
+
 def rank_candidates_bm25(candidates: List[CandidateRecipe], query_terms: List[str]) -> List[CandidateRecipe]:
     """Applies BM25 text ranking over candidate recipes based on query terms."""
     if not candidates or not query_terms:
@@ -61,18 +128,18 @@ def rank_candidates_bm25(candidates: List[CandidateRecipe], query_terms: List[st
         corpus.append(text)
 
     bm25 = BM25Okapi(corpus)
-    tokenized_query = [t.lower() for t in query_terms]
+    tokenized_query = " ".join(query_terms).lower().split()
     scores = bm25.get_scores(tokenized_query)
 
     # Sort candidates by BM25 score descending
     scored_pairs = list(zip(candidates, scores))
     scored_pairs.sort(key=lambda pair: pair[1], reverse=True)
 
-    # Filter out candidates with zero score if we have matches with >0 score
+    # Return only candidates with positive score (score > 0)
     has_positive = any(s > 0 for _, s in scored_pairs)
     if has_positive:
         return [c for c, s in scored_pairs if s > 0]
-    return candidates
+    return []
 
 
 async def retrieve_candidates(constraints: StructuredConstraints) -> List[CandidateRecipe]:
@@ -109,8 +176,14 @@ async def retrieve_candidates(constraints: StructuredConstraints) -> List[Candid
                 cand_dict = parse_themealdb_to_candidate_dict(m)
                 candidates.append(CandidateRecipe(**cand_dict))
 
-    # Fallback to all local recipes if nothing was matched
-    if not candidates:
+    # 3. Dynamic Synthesis: If still no candidates and user specified ingredients/dish, synthesize via Gemini
+    if not candidates and constraints.available_ingredients:
+        synth = await synthesize_recipe_gemini(constraints)
+        if synth:
+            candidates.append(synth)
+
+    # 4. Fallback to all local recipes only when user had NO ingredient constraints (e.g. general "quick dinner")
+    if not candidates and not constraints.available_ingredients:
         candidates = local_candidates
 
     return candidates

@@ -17,14 +17,17 @@ from backend.app.db.models import (
     NutritionTip
 )
 
-def seed_database():
+def seed_database(force: bool = False):
     print("Initializing database tables...")
+    if force:
+        print("Force re-seeding: dropping existing tables...")
+        Base.metadata.drop_all(bind=engine)
     # 1. Inspect SQLAlchemy models and create all 11 tables in SQLite
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
     # Prevent duplicate data insertion if database was already seeded
-    if db.query(Recipe).first():
+    if not force and db.query(Recipe).first():
         print("Database already contains records. Seeding skipped.")
         db.close()
         return
@@ -320,6 +323,132 @@ def seed_database():
             source="deterministic_rule"
         ))
 
+        # --- Recipe 5: Authentic Sri Lankan Vegetable & Egg Kottu Roti ---
+        kottu = Recipe(
+            title="Sri Lankan Vegetable & Egg Kottu Roti",
+            description="Iconic Sri Lankan street food dish of chopped Godamba flatbread stir-fried on an iron griddle with vegetables, eggs, curry leaves, and aromatic spices.",
+            cuisine="Sri Lankan",
+            meal_type="Dinner",
+            cooking_minutes=15,
+            preparation_minutes=10,
+            servings=2,
+            instructions=(
+                "1. Shred Godamba flatbread (or parathas/rotis) into thin, bite-sized ribbons.\n"
+                "2. Heat oil in a large wok or heavy griddle. Sauté sliced onions, garlic, ginger, curry leaves, and green chilies until fragrant.\n"
+                "3. Add shredded carrots, leeks, and cabbage. Stir-fry vigorously on high heat for 3 minutes.\n"
+                "4. Push vegetables aside, crack in two fresh eggs, and scramble quickly until soft curd forms.\n"
+                "5. Toss in the shredded roti strips, roasted Ceylon curry powder, chili flakes, and 3 tablespoons of rich curry gravy.\n"
+                "6. Using two metal spatulas or chef knives, rhythmically chop and stir-fry everything together on high heat.\n"
+                "7. Serve steaming hot with fresh lime wedges and spicy curry sauce on the side."
+            ),
+            source_name="Local Knowledgebase",
+            source_type="local"
+        )
+        db.add(kottu)
+        db.flush()
+
+        db.add(Nutrition(
+            recipe_id=kottu.id,
+            calories=420.0,
+            protein_grams=15.0,
+            carbs_grams=54.0,
+            fat_grams=16.0,
+            fiber_grams=5.0,
+            sodium_mg=460.0,
+            per_serving=True,
+            is_estimated=False
+        ))
+
+        kottu_ingredients = [
+            ("godamba roti strips", "wheat flour", 3.0, "sheets"),
+            ("shredded cabbage", "cabbage", 1.0, "cup"),
+            ("sliced carrots", "carrots", 0.5, "cup"),
+            ("sliced leeks", "leeks", 0.5, "cup"),
+            ("fresh eggs", "eggs", 2.0, "pieces"),
+            ("red shallots", "shallots", 3.0, "pieces"),
+            ("curry leaves", "curry leaves", 1.0, "sprig"),
+            ("green chilies", "chili", 2.0, "pieces"),
+            ("roasted curry powder", "curry powder", 1.0, "tbsp"),
+            ("vegetable oil", "oil", 2.0, "tbsp"),
+            ("salt", "salt", 0.5, "tsp")
+        ]
+        for name, canonical, qty, unit in kottu_ingredients:
+            db.add(RecipeIngredient(
+                recipe_id=kottu.id,
+                ingredient_name=name,
+                canonical_ingredient=canonical,
+                quantity=qty,
+                unit=unit
+            ))
+
+        # Kottu Allergens: Gluten (wheat roti) and Eggs
+        db.add(RecipeAllergen(
+            recipe_id=kottu.id,
+            allergen_id=allergen_records["gluten"].id,
+            confidence=1.0,
+            source="deterministic_rule"
+        ))
+        db.add(RecipeAllergen(
+            recipe_id=kottu.id,
+            allergen_id=allergen_records["eggs"].id,
+            confidence=1.0,
+            source="deterministic_rule"
+        ))
+
+        # --- Recipe 6: Authentic Sri Lankan Plain Hoppers (Appa) ---
+        hoppers = Recipe(
+            title="Sri Lankan Plain Hoppers (Appa)",
+            description="Crispy, bowl-shaped fermented coconut pancakes with a golden lacy rim and a pillowy, soft, spongy center.",
+            cuisine="Sri Lankan",
+            meal_type="Breakfast",
+            cooking_minutes=15,
+            preparation_minutes=15,
+            servings=4,
+            instructions=(
+                "1. In a small bowl, dissolve active dry yeast and 1 tsp sugar in warm water. Let froth for 10 minutes.\n"
+                "2. Combine rice flour and coconut water in a large bowl, whisk in yeast mixture, and let ferment for 6 hours.\n"
+                "3. Before cooking, stir in thick coconut milk and salt until a smooth, pourable pancake batter is formed.\n"
+                "4. Heat a curved hopper pan (thachchiya) over medium flame. Pour a ladle of batter into the center.\n"
+                "5. Lift and swirl the pan evenly in a circular motion so the batter coats the sides, leaving excess in the center.\n"
+                "6. Cover with a lid and cook for 2-3 minutes until edges turn crisp and golden brown.\n"
+                "7. Gently slide the hopper onto a plate. Serve warm with spicy Pol Sambol, Lunu Miris, or Seeni Sambol."
+            ),
+            source_name="Local Knowledgebase",
+            source_type="local"
+        )
+        db.add(hoppers)
+        db.flush()
+
+        db.add(Nutrition(
+            recipe_id=hoppers.id,
+            calories=190.0,
+            protein_grams=3.5,
+            carbs_grams=34.0,
+            fat_grams=5.0,
+            fiber_grams=2.0,
+            sodium_mg=120.0,
+            per_serving=True,
+            is_estimated=False
+        ))
+
+        hoppers_ingredients = [
+            ("rice flour", "rice flour", 2.0, "cups"),
+            ("thick coconut milk", "coconut milk", 1.0, "cup"),
+            ("active dry yeast", "yeast", 1.0, "tsp"),
+            ("sugar", "sugar", 1.0, "tsp"),
+            ("warm water", "water", 0.5, "cup"),
+            ("salt", "salt", 0.5, "tsp")
+        ]
+        for name, canonical, qty, unit in hoppers_ingredients:
+            db.add(RecipeIngredient(
+                recipe_id=hoppers.id,
+                ingredient_name=name,
+                canonical_ingredient=canonical,
+                quantity=qty,
+                unit=unit
+            ))
+        # Plain hoppers are naturally free of gluten, dairy, nuts, shellfish, and eggs!
+
         # ==============================================================================
         # 5. Seed Recipe Nutrition Tips & Food Safety News
         # ==============================================================================
@@ -398,4 +527,6 @@ def seed_database():
         raise e
 
 if __name__ == "__main__":
-    seed_database()
+    import sys
+    force_flag = "--force" in sys.argv
+    seed_database(force=force_flag)

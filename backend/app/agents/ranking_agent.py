@@ -16,16 +16,17 @@ from typing import List, Optional, Dict
 from backend.app.db.schemas import CandidateRecipe, StructuredConstraints, RankedRecipe
 
 
-def calculate_ingredient_match(recipe_ingredients: List[str], available_ingredients: List[str]) -> float:
+def calculate_ingredient_match(recipe_ingredients: List[str], available_ingredients: List[str], recipe_title: str = "") -> float:
     """
-    Computes fraction of available ingredients that appear in the recipe.
+    Computes fraction of available ingredients / dish search terms that appear
+    in either the recipe ingredients or the recipe title.
     Returns value between 0.0 and 1.0.
     """
     if not available_ingredients:
         return 0.5  # Neutral baseline when user didn't specify ingredient restrictions
 
     matched = 0
-    recipe_text = " ".join(recipe_ingredients).lower()
+    recipe_text = (" ".join(recipe_ingredients) + " " + recipe_title).lower()
     for ing in available_ingredients:
         ing_clean = ing.strip().lower()
         if ing_clean and ing_clean in recipe_text:
@@ -109,7 +110,7 @@ def rank(safe_recipes: List[CandidateRecipe], constraints: StructuredConstraints
     scored_recipes: List[RankedRecipe] = []
 
     for recipe in safe_recipes:
-        ing_score = calculate_ingredient_match(recipe.ingredients, constraints.available_ingredients)
+        ing_score = calculate_ingredient_match(recipe.ingredients, constraints.available_ingredients, recipe.title)
         diet_score = calculate_diet_match(recipe.dietary_tags, constraints.diet_type)
         nutr_score = calculate_nutrition_match(recipe.calories, constraints.max_calories)
         time_score = calculate_time_match(recipe.cooking_minutes, constraints.max_time_minutes)
