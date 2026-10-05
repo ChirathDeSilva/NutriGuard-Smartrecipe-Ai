@@ -210,10 +210,7 @@ async def chat_pipeline(request: UserQueryRequest, db: Session = Depends(get_db)
     # 2. AGENT 2: Retrieval Agent (BM25 SQLite + External API Fallback)
     candidates = await retrieval_agent.retrieve_candidates(constraints)
     if not candidates:
-        raise HTTPException(
-            status_code=404,
-            detail="No matching recipes found in local database or external sources."
-        )
+        candidates = retrieval_agent.get_local_recipes_as_candidates(db)
 
     # 3. AGENT 3: Safety Agent (100% Deterministic Python Logic - ZERO LLM)
     safe_candidates, verdicts = safety_agent.validate_candidates(candidates, constraints)

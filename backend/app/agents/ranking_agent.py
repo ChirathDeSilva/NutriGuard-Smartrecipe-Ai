@@ -29,7 +29,11 @@ def calculate_ingredient_match(recipe_ingredients: List[str], available_ingredie
     recipe_text = (" ".join(recipe_ingredients) + " " + recipe_title).lower()
     for ing in available_ingredients:
         ing_clean = ing.strip().lower()
-        if ing_clean and ing_clean in recipe_text:
+        if not ing_clean:
+            continue
+        # Direct match or singular/plural stem match
+        singular = ing_clean[:-1] if ing_clean.endswith("s") and len(ing_clean) > 3 else ing_clean
+        if ing_clean in recipe_text or (singular and singular in recipe_text):
             matched += 1
 
     return min(1.0, matched / max(1, len(available_ingredients)))

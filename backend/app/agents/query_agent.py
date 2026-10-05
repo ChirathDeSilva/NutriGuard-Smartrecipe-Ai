@@ -10,6 +10,7 @@ Extracts structured constraints from conversational user prompts:
 """
 
 import re
+import difflib
 import spacy
 from typing import List, Optional, Dict, Any
 from backend.app.db.schemas import UserQueryRequest, StructuredConstraints
@@ -100,6 +101,63 @@ IGNORE_WORDS = {
     "a", "an", "step", "steps", "instructions", "prepare"
 }
 
+# Known common culinary spelling errors and fast corrections
+COMMON_TYPOS = {
+    "potatao": "potato",
+    "potatos": "potato",
+    "pottato": "potato",
+    "chiken": "chicken",
+    "chikcen": "chicken",
+    "chickn": "chicken",
+    "chikn": "chicken",
+    "dahl": "dhal",
+    "daal": "dhal",
+    "dal": "dhal",
+    "parippu": "dhal",
+    "kotu": "kottu",
+    "kothu": "kottu",
+    "hoper": "hoppers",
+    "hopers": "hoppers",
+    "appa": "hoppers",
+    "appam": "hoppers",
+    "sambal": "sambol",
+    "samball": "sambol",
+    "onoin": "onion",
+    "tamato": "tomato",
+    "tamatoes": "tomatoes",
+    "prawnn": "prawn",
+    "proan": "prawn",
+    "biriyani": "biryani",
+    "briyani": "biryani",
+    "piza": "pizza",
+    "pizaa": "pizza",
+    "nudles": "noodles",
+    "chese": "cheese",
+    "fsh": "fish",
+    "fishe": "fish",
+    "beaf": "beef",
+    "porck": "pork"
+}
+
+
+def correct_prompt_typos(prompt_text: str) -> str:
+    """
+    Applies dictionary and fuzzy culinary matching to correct common spelling errors
+    in user queries (e.g. 'potatao' -> 'potato', 'chiken' -> 'chicken').
+    """
+    words = re.findall(r"\b[a-zA-Z]+\b", prompt_text)
+    corrected = prompt_text
+    for w in words:
+        wl = w.lower()
+        if wl in COMMON_TYPOS:
+            target = COMMON_TYPOS[wl]
+            corrected = re.sub(r"\b" + re.escape(w) + r"\b", target, corrected, flags=re.IGNORECASE)
+        elif len(wl) >= 4 and wl not in IGNORE_WORDS:
+            fuzzy = difflib.get_close_matches(wl, COMMON_FOOD_TERMS, n=1, cutoff=0.8)
+            if fuzzy and fuzzy[0] != wl:
+                corrected = re.sub(r"\b" + re.escape(w) + r"\b", fuzzy[0], corrected, flags=re.IGNORECASE)
+    return corrected
+
 
 def resolve_context_dish(conversation_history: List[Dict[str, Any]]) -> Optional[str]:
     """
@@ -149,7 +207,7 @@ def parse_query(request: UserQueryRequest) -> StructuredConstraints:
     Combines user prompt text with sidebar widget selections and multi-turn context.
     """
     prompt = request.prompt.strip()
-    prompt_lower = prompt.lower()
+    prompt_lower = correct_prompt_typos(prompt.lower())
 
     # Multi-turn Context Resolution: Check if prompt refers to a previously discussed dish
     has_pronoun_reference = bool(re.search(r"\b(?:it|this|that|them|same|the dish)\b", prompt_lower))
