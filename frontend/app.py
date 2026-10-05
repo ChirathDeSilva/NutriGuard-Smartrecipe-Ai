@@ -105,7 +105,7 @@ with st.sidebar:
     cuisine_pref = st.selectbox(
         "🌍 Cuisine Preference",
         options=["Any", "Sri Lankan", "Indian", "Italian", "Mexican", "Chinese"],
-        index=1
+        index=0
     )
 
     st.divider()

@@ -153,15 +153,15 @@ async def retrieve_candidates(constraints: StructuredConstraints) -> List[Candid
     finally:
         db.close()
 
-    # Search query terms: ingredients + cuisine preference
-    query_terms = list(constraints.available_ingredients)
-    if constraints.cuisine:
-        query_terms.append(constraints.cuisine)
-
     # 1. First, search local database using BM25
+    # When user specifies ingredients or dish terms, search local DB by those specific terms.
+    # Do NOT contaminate ingredient search with cuisine name, because all local dishes share
+    # the local cuisine name and would falsely match unrelated queries (e.g. 'pizza' matching 'dhal curry').
     matched_local: List[CandidateRecipe] = []
-    if query_terms:
-        matched_local = rank_candidates_bm25(local_candidates, query_terms)
+    if constraints.available_ingredients:
+        matched_local = rank_candidates_bm25(local_candidates, constraints.available_ingredients)
+    elif constraints.cuisine:
+        matched_local = rank_candidates_bm25(local_candidates, [constraints.cuisine])
     else:
         matched_local = local_candidates
 
