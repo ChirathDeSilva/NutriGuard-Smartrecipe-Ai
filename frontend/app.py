@@ -167,16 +167,27 @@ if user_prompt:
                 response = requests.post(BACKEND_URL, json=payload, timeout=20.0)
 
                 if response.status_code == 200:
-                    recipe_data = response.json()
-                    card_id = f"card_{len(st.session_state.messages)}"
-                    render_recipe_card(recipe_data, card_key=card_id)
+                    api_data = response.json()
+                    response_type = api_data.get("response_type", "recipe_recommendation")
 
-                    # Store in chat history
-                    st.session_state.messages.append({
-                        "role": "assistant",
-                        "type": "recipe_card",
-                        "content": recipe_data
-                    })
+                    if response_type == "conversational":
+                        msg_text = api_data.get("message", "Hello! How can I help you?")
+                        st.markdown(msg_text)
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "type": "text",
+                            "content": msg_text
+                        })
+                    else:
+                        card_id = f"card_{len(st.session_state.messages)}"
+                        render_recipe_card(api_data, card_key=card_id)
+
+                        # Store in chat history
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "type": "recipe_card",
+                            "content": api_data
+                        })
 
                 elif response.status_code == 400:
                     err = response.json().get("detail", {})

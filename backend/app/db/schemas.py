@@ -72,14 +72,16 @@ class RankedRecipe(BaseModel):
 # 6. AGENT 5 CONTRACT: Final Grounded Response (Agent 5 -> Frontend)
 # ==============================================================================
 class FinalAgentResponse(BaseModel):
-    recipe_title: str
-    score: float
-    why_selected: str
-    formatted_instructions: str
-    nutrition_facts: Dict[str, Any]
-    warnings: List[str]
-    sources: List[str]
-    score_breakdown: Dict[str, float]
+    response_type: str = "recipe_recommendation"  # "recipe_recommendation" or "conversational"
+    message: Optional[str] = None
+    recipe_title: Optional[str] = None
+    score: Optional[float] = 0.0
+    why_selected: Optional[str] = None
+    formatted_instructions: Optional[str] = None
+    nutrition_facts: Dict[str, Any] = Field(default_factory=dict)
+    warnings: List[str] = Field(default_factory=list)
+    sources: List[str] = Field(default_factory=list)
+    score_breakdown: Dict[str, float] = Field(default_factory=dict)
     is_nutrition_estimated: bool = False
 
 

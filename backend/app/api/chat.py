@@ -36,6 +36,38 @@ async def chat_pipeline(request: UserQueryRequest, db: Session = Depends(get_db)
     # 1. AGENT 1: Query Agent (spaCy NLP & Constraint Extraction)
     constraints = query_agent.parse_query(request)
 
+    # --------------------------------------------------------------------------
+    # INTENT HANDLING: Greetings, FAQs, and Unrelated Topics
+    # --------------------------------------------------------------------------
+    if constraints.intent == "greeting":
+        greeting_text = (
+            "👋 **Hello! Welcome to NutriGuard AI.**\n\n"
+            "I am your personal culinary food safety and recipe recommendation assistant. "
+            "Tell me what ingredients you have in your kitchen (e.g., *chicken, red lentils, coconut milk, shallots*), "
+            "or what kind of dish you would like to prepare. I will search our recipe database, strictly verify "
+            "all food allergens, and recommend the healthiest, safest recipe for you!"
+        )
+        return FinalAgentResponse(
+            response_type="conversational",
+            message=greeting_text,
+            recipe_title=None,
+            score=0.0
+        )
+
+    if constraints.intent == "unrelated":
+        unrelated_text = (
+            "⚠️ **Out of Scope Question:**\n\n"
+            "I specialize exclusively in **food, recipes, cooking instructions, dietary lifestyles, and food allergy safety**.\n\n"
+            "I cannot assist with unrelated topics like technology, politics, general chat, or finance. "
+            "Please ask me about a recipe or tell me what ingredients you have to cook with!"
+        )
+        return FinalAgentResponse(
+            response_type="conversational",
+            message=unrelated_text,
+            recipe_title=None,
+            score=0.0
+        )
+
     # 2. AGENT 2: Retrieval Agent (BM25 SQLite + External API Fallback)
     candidates = await retrieval_agent.retrieve_candidates(constraints)
     if not candidates:
