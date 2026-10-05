@@ -96,6 +96,10 @@ KNOWN_DISH_INFO = {
         "**Kottu Roti** is Sri Lanka's ultimate street food sensation: chopped godamba flatbread stir-fried on an iron griddle "
         "with vegetables, eggs, spices, and rich curry gravy with an energetic culinary rhythm."
     ),
+    "kottu roti": (
+        "**Kottu Roti** is Sri Lanka's ultimate street food sensation: chopped godamba flatbread stir-fried on an iron griddle "
+        "with vegetables, eggs, spices, and rich curry gravy with an energetic culinary rhythm."
+    ),
     "chicken curry": (
         "**Sri Lankan Chicken Curry** (Kukul Mas Curry) is deeply aromatic and robust, cooked with roasted Ceylon curry powder, "
         "pandan leaves, lemongrass, ginger, garlic, and rich coconut milk."
@@ -179,9 +183,10 @@ async def chat_pipeline(request: UserQueryRequest, db: Session = Depends(get_db)
         clean_lower = clean_food.lower()
 
         dish_desc = None
-        for key, desc in KNOWN_DISH_INFO.items():
+        # Sort keys by length descending so "kottu roti" matches before "roti"
+        for key in sorted(KNOWN_DISH_INFO.keys(), key=len, reverse=True):
             if key in clean_lower:
-                dish_desc = desc
+                dish_desc = KNOWN_DISH_INFO[key]
                 break
 
         if not dish_desc:

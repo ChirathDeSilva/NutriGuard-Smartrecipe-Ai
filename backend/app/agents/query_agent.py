@@ -71,6 +71,21 @@ CULINARY_KEYWORDS = {
     "vegan", "vegetarian", "nutrition", "diet"
 }
 
+# Common culinary food/ingredient items to ensure reliable entity extraction
+# even when spaCy POS tagging misidentifies tokens (e.g. 'chicken' or 'fish' as verbs)
+COMMON_FOOD_TERMS = [
+    "chicken", "beef", "pork", "lamb", "mutton", "fish", "prawn", "prawns", "shrimp", "shrimps",
+    "crab", "crabs", "egg", "eggs", "lentil", "lentils", "dhal", "dal", "rice", "cashew", "cashews",
+    "coconut", "coconut milk", "jackfruit", "polos", "eggplant", "brinjal", "potato", "potatoes",
+    "tomato", "tomatoes", "onion", "shallot", "shallots", "garlic", "ginger", "lemongrass", "chili",
+    "chilies", "pepper", "flour", "cheese", "pasta", "pizza", "noodles", "mushroom", "mushrooms",
+    "spinach", "tofu", "paneer", "salmon", "tuna", "turkey", "duck", "bacon", "sausage", "beans",
+    "peas", "chickpeas", "avocado", "broccoli", "carrot", "carrots", "cucumber", "cabbage",
+    "curry leaves", "pandan", "coriander", "cumin", "fenugreek", "cinnamon", "cardamom", "cloves",
+    "mustard", "roti", "pol roti", "hoppers", "string hoppers", "pol sambol", "biryani", "kiribath",
+    "ambul thiyal", "kottu", "vada", "vadai"
+]
+
 # Stopwords/filler words that should not be parsed as ingredients
 IGNORE_WORDS = {
     "recipe", "recipes", "food", "dinner", "lunch", "breakfast", "dish",
@@ -275,6 +290,14 @@ def parse_query(request: UserQueryRequest) -> StructuredConstraints:
             if ingredient_candidate not in allergies_set and ingredient_candidate not in KNOWN_DIET_TERMS:
                 if ingredient_candidate not in available_ingredients:
                     available_ingredients.append(ingredient_candidate)
+
+    # Supplemental check for known culinary food terms to catch tokens
+    # that spaCy POS tagged as verbs or aux (e.g. 'chicken' in 'i have chicken coconut milk')
+    for term in sorted(COMMON_FOOD_TERMS, key=len, reverse=True):
+        if re.search(r"\b" + re.escape(term) + r"\b", prompt_lower):
+            if term not in allergies_set and term not in KNOWN_DIET_TERMS:
+                if not any(term in ing for ing in available_ingredients):
+                    available_ingredients.append(term)
 
     # Ensure context-resolved dish is included in search candidates
     if context_dish:
