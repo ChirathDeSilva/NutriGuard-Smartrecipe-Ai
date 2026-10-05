@@ -172,7 +172,7 @@ async def retrieve_candidates(constraints: StructuredConstraints) -> List[Candid
     if len(candidates) < 2 and constraints.available_ingredients:
         for ing in constraints.available_ingredients[:2]:
             external_meals = await search_themealdb(ing)
-            for m in external_meals[:2]:
+            for m in external_meals[:4]:
                 cand_dict = parse_themealdb_to_candidate_dict(m)
                 candidates.append(CandidateRecipe(**cand_dict))
 

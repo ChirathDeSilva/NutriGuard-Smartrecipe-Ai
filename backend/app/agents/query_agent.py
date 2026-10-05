@@ -98,28 +98,28 @@ def resolve_context_dish(conversation_history: List[Dict[str, Any]]) -> Optional
         content = str(msg.get("content", ""))
 
         # 1. Match from "Culinary Guide: <Dish>" header
-        guide_match = re.search(r"Culinary Guide:\s*([A-Za-z\s]+)", content, re.IGNORECASE)
+        guide_match = re.search(r"Culinary Guide:\s*([^\n\r*:]+)", content, re.IGNORECASE)
         if guide_match:
             dish = guide_match.group(1).strip()
             if dish and dish.lower() not in {"recipe information", "dish information"}:
                 return dish
 
         # 2. Match from "**<Dish>** is a..." pattern
-        bold_match = re.search(r"\*\*([A-Za-z\s]+)\*\*\s+(?:is|are)\b", content, re.IGNORECASE)
+        bold_match = re.search(r"\*\*([^\n\r*]+)\*\*\s+(?:is|are)\b", content, re.IGNORECASE)
         if bold_match:
             dish = bold_match.group(1).strip()
             if 0 < len(dish.split()) <= 4 and dish.lower() not in {"this dish", "recipe information", "nutriguard ai"}:
                 return dish
 
         # 3. Match from user query: "what is <dish>" or "tell me about <dish>"
-        user_food_match = re.search(r"^(?:what\s+is|what\s+are|tell\s+me\s+about|explain)\s+([A-Za-z\s]+)", content, re.IGNORECASE)
+        user_food_match = re.search(r"^(?:what\s+is|what\s+are|tell\s+me\s+about|explain)\s+([^\n\r?.]+)", content, re.IGNORECASE)
         if user_food_match:
             dish = user_food_match.group(1).strip()
             if dish:
                 return dish
 
         # 4. Match from recipe recommendation: "Recommended Recipe: <Title>"
-        recipe_title_match = re.search(r"(?:Recommended Recipe:|Title:)\s*([A-Za-z\s\(\)]+)", content, re.IGNORECASE)
+        recipe_title_match = re.search(r"(?:Recommended Recipe:|Title:)\s*([^\n\r]+)", content, re.IGNORECASE)
         if recipe_title_match:
             dish = recipe_title_match.group(1).strip()
             if dish:
@@ -138,7 +138,7 @@ def parse_query(request: UserQueryRequest) -> StructuredConstraints:
 
     # Multi-turn Context Resolution: Check if prompt refers to a previously discussed dish
     has_pronoun_reference = bool(re.search(r"\b(?:it|this|that|them|same|the dish)\b", prompt_lower))
-    is_asking_how = bool(re.search(r"\b(?:how\s+to\s+make|how\s+do\s+you\s+make|how\s+can\s+i\s+make|how\s+do\s+i\s+make|how\s+to\s+cook|recipe\s+for|make\s+it|cook\s+it|prepare\s+it)\b", prompt_lower))
+    is_asking_how = bool(re.search(r"\b(?:how\s+to\s+make|how\s+do\s+you\s+make|how\s+can\s+i\s+make|how\s+do\s+i\s+make|how\s+to\s+cook|how\s+to\s+create|how\s+to\s+prepare|recipe\s+for|make\s+it|cook\s+it|create\s+it|prepare\s+it|bake\s+it)\b", prompt_lower))
 
     context_dish: Optional[str] = None
     if (has_pronoun_reference or is_asking_how) and request.conversation_history:
