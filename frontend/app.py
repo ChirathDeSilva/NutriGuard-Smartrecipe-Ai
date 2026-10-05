@@ -164,7 +164,7 @@ if user_prompt:
     with st.chat_message("assistant"):
         with st.spinner("🤖 NutriGuard Multi-Agent Pipeline processing... (Query -> Retrieval -> Safety -> Ranking -> Response)"):
             try:
-                response = requests.post(BACKEND_URL, json=payload, timeout=20.0)
+                response = requests.post(BACKEND_URL, json=payload, timeout=45.0)
 
                 if response.status_code == 200:
                     api_data = response.json()

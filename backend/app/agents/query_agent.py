@@ -138,16 +138,16 @@ def parse_query(request: UserQueryRequest) -> StructuredConstraints:
     cuisine = request.cuisine_preference or ("Sri Lankan" if "sri lankan" in prompt_lower else None)
 
     # --------------------------------------------------------------------------
-    # 4. Intent Classification: greeting, unrelated, or recipe_search
+    # 4. Intent Classification: greeting, food_question, unrelated, or recipe_search
     # --------------------------------------------------------------------------
-    # Check for greeting or introductory question first
     is_greeting = any(re.search(pat, prompt_lower) for pat in GREETING_PATTERNS)
-    # Check for explicitly unrelated topics
     is_unrelated = any(re.search(pat, prompt_lower) for pat in UNRELATED_PATTERNS)
-
     has_culinary = any(kw in prompt_lower for kw in CULINARY_KEYWORDS)
 
-    if is_greeting and not has_culinary:
+    # Detect conversational food questions (e.g. "what is roti", "tell me about hoppers", "what is pol sambol")
+    is_food_question = bool(re.search(r"^(?:what\s+is|what\s+are|tell\s+me\s+about|how\s+do\s+you\s+make|explain)\s+([a-zA-Z\s]+)", prompt_lower))
+
+    if is_greeting and not has_culinary and not is_food_question:
         return StructuredConstraints(
             intent="greeting",
             available_ingredients=[],
@@ -159,9 +159,21 @@ def parse_query(request: UserQueryRequest) -> StructuredConstraints:
             servings=2
         )
 
-    if is_unrelated and not has_culinary:
+    if is_unrelated and not has_culinary and not is_food_question:
         return StructuredConstraints(
             intent="unrelated",
+            available_ingredients=[],
+            allergies=list(allergies_set),
+            diet_type=diet_type,
+            max_time_minutes=max_time,
+            max_calories=max_cal,
+            cuisine=cuisine,
+            servings=2
+        )
+
+    if is_food_question:
+        return StructuredConstraints(
+            intent="food_question",
             available_ingredients=[],
             allergies=list(allergies_set),
             diet_type=diet_type,

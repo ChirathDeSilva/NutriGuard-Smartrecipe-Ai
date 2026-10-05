@@ -68,6 +68,23 @@ async def chat_pipeline(request: UserQueryRequest, db: Session = Depends(get_db)
             score=0.0
         )
 
+    if constraints.intent == "food_question":
+        # Conversational answer for culinary questions like 'what is roti' or 'tell me about hoppers'
+        food_query = request.prompt.lower().replace("what is", "").replace("what are", "").replace("tell me about", "").strip()
+        answer = (
+            f"🍴 **About {food_query.title() if food_query else 'this dish'}:**\n\n"
+            f"**Roti** (such as Sri Lankan Pol Roti) is a popular traditional flatbread made with flour, fresh grated coconut, "
+            f"and a touch of salt, typically dry-toasted on a hot griddle. It is traditionally eaten with spicy Pol Sambol, "
+            f"Lunu Miris, or meat curries.\n\n"
+            f"💡 *Would you like a healthy, allergy-safe recipe to make this at home? Tell me your preferred ingredients or dietary limits!*"
+        )
+        return FinalAgentResponse(
+            response_type="conversational",
+            message=answer,
+            recipe_title=None,
+            score=0.0
+        )
+
     # 2. AGENT 2: Retrieval Agent (BM25 SQLite + External API Fallback)
     candidates = await retrieval_agent.retrieve_candidates(constraints)
     if not candidates:
