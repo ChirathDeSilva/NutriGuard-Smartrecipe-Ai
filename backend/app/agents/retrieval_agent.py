@@ -117,6 +117,9 @@ Respond with ONLY valid JSON.
         return None
 
 
+import re
+
+
 def rank_candidates_bm25(candidates: List[CandidateRecipe], query_terms: List[str]) -> List[CandidateRecipe]:
     """Applies BM25 text ranking over candidate recipes based on query terms."""
     if not candidates or not query_terms:
@@ -124,11 +127,11 @@ def rank_candidates_bm25(candidates: List[CandidateRecipe], query_terms: List[st
 
     corpus = []
     for c in candidates:
-        text = f"{c.title} {' '.join(c.ingredients)} {c.cuisine}".lower().split()
-        corpus.append(text)
+        combined = f"{c.title} {' '.join(c.ingredients)} {c.cuisine}".lower()
+        corpus.append(re.findall(r"\w+", combined))
 
     bm25 = BM25Okapi(corpus)
-    tokenized_query = " ".join(query_terms).lower().split()
+    tokenized_query = re.findall(r"\w+", " ".join(query_terms).lower())
     scores = bm25.get_scores(tokenized_query)
 
     # Sort candidates by BM25 score descending

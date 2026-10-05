@@ -24,42 +24,105 @@ import re
 router = APIRouter(tags=["Chat & Recipe Pipeline"])
 
 KNOWN_DISH_INFO = {
+    # --- International Classics ---
+    "pizza": (
+        "**Pizza** is a beloved Italian culinary classic featuring a leavened dough crust topped with rich tomato sauce, "
+        "melted mozzarella or plant-based cheese, and savory toppings like basil, mushrooms, or roasted meats. "
+        "At NutriGuard, we help you prepare light, balanced crusts with fresh herbs and allergen-safe toppings."
+    ),
+    "pasta": (
+        "**Pasta** is a versatile Italian staple made from durum wheat semolina or gluten-free grains, boiled al dente "
+        "and paired with vibrant marinara, basil pesto, or light olive oil emulsions. It offers energizing complex carbohydrates."
+    ),
+    "burger": (
+        "**Burger** is an iconic dish featuring a seasoned patty—made from lean poultry, beef, or nutrient-dense plant proteins "
+        "like black beans or lentils—served inside a toasted bun with crisp lettuce, ripe tomatoes, and gourmet relish."
+    ),
+    "sushi": (
+        "**Sushi** is a refined Japanese culinary tradition pairing seasoned vinegared rice with fresh fish, seafood, avocado, "
+        "and crisp nori seaweed. It is celebrated worldwide for its clean flavors, high protein, and omega-3 fatty acids."
+    ),
+    "biryani": (
+        "**Biryani** is a majestic South Asian rice dish featuring aged long-grain basmati rice layered with tender spiced meats "
+        "or vegetables, saffron, caramelized shallots, and whole spices like cardamom, cloves, and star anise."
+    ),
+    "tacos": (
+        "**Tacos** are a vibrant Mexican culinary staple featuring soft corn or flour tortillas folded around spiced proteins, "
+        "fresh salsa, crunchy cabbage, and zesty lime juice, providing a balanced blend of fiber, protein, and bold flavors."
+    ),
+    "noodles": (
+        "**Noodles** are a beloved global comfort food, from Asian stir-fried wok noodles to rich brothy ramen, "
+        "easily customized with colorful vegetables, lean proteins, and low-sodium savory sauces."
+    ),
+    "salad": (
+        "**Salad** is a nutrient-dense dish composed of crisp leafy greens, crunchy vegetables, seeds, nuts, and healthy vinaigrettes, "
+        "delivering vital antioxidants, dietary fiber, and micronutrients."
+    ),
+    "soup": (
+        "**Soup** is a deeply nourishing liquid dish created by simmering wholesome vegetables, legumes, or tender meats "
+        "with fragrant herbs and aromatics, perfect for gentle digestion and optimal hydration."
+    ),
+
+    # --- Sri Lankan Heritage Dishes ---
     "roti": (
-        "**Roti** (such as Sri Lankan Pol Roti) is a popular traditional flatbread made with wheat flour, "
-        "fresh grated coconut, diced onions, and salt, typically dry-toasted on a hot griddle. "
-        "It is traditionally eaten with spicy Pol Sambol, Lunu Miris, or rich curries."
+        "**Roti** (such as Sri Lankan Pol Roti) is a rustic traditional flatbread made with wheat flour, "
+        "fresh grated coconut, diced shallots, and green chilies, toasted to golden perfection on a dry griddle."
     ),
     "pol roti": (
-        "**Pol Roti** is a quintessential Sri Lankan flatbread crafted from grated coconut, wheat flour, "
-        "green chilies, shallots, and salt. Crispy on the edges and soft inside, it is a staple breakfast and dinner dish."
+        "**Pol Roti** is a quintessential Sri Lankan flatbread crafted from fresh grated coconut, wheat flour, "
+        "green chilies, shallots, and salt. Crispy on the crust and soft inside, it pairs perfectly with spicy Pol Sambol or Dhal."
     ),
     "hoppers": (
         "**Hoppers** (Appa) are iconic bowl-shaped Sri Lankan pancakes made from fermented rice flour batter and coconut milk, "
-        "distinguished by a crisp golden lace edge and a soft, spongy, steaming center."
+        "distinguished by a crisp golden lace edge and a soft, pillowy, steaming center."
     ),
     "string hoppers": (
-        "**String Hoppers** (Idiyappam) are delicate steamed rice noodle nests, traditionally served with spicy "
-        "Kiri Hodi (coconut milk gravy), Pol Sambol, or meat curry."
+        "**String Hoppers** (Idiyappam) are delicate steamed rice noodle nests, traditionally served for breakfast or dinner "
+        "with turmeric coconut milk gravy (Kiri Hodi), Pol Sambol, or meat curry."
     ),
     "pol sambol": (
-        "**Pol Sambol** is a vibrant, spicy, and tangy Sri Lankan coconut relish made by pounding freshly scraped coconut "
-        "with red chili powder, shallots, lime juice, and salt (traditionally enhanced with Maldive fish flakes)."
+        "**Pol Sambol** is a vibrant, spicy, and tangy Sri Lankan coconut relish prepared by pounding freshly scraped coconut "
+        "with whole red chili, shallots, lime juice, and salt (traditionally enhanced with umami Maldive fish flakes)."
     ),
     "dhal": (
-        "**Dhal Curry** (Parippu) is a comforting, golden red lentil curry gently simmered in coconut milk, turmeric, "
-        "curry leaves, tempered mustard seeds, and garlic. It is the heart of every Sri Lankan meal."
+        "**Dhal Curry** (Parippu) is a comforting, golden red lentil curry gently simmered in creamy coconut milk, turmeric, "
+        "curry leaves, tempered mustard seeds, and garlic. It forms the nutritional backbone of everyday Sri Lankan dining."
     ),
     "dhal curry": (
-        "**Dhal Curry** (Parippu) is a comforting, golden red lentil curry gently simmered in coconut milk, turmeric, "
-        "curry leaves, tempered mustard seeds, and garlic. It is the heart of every Sri Lankan meal."
+        "**Dhal Curry** (Parippu) is a comforting, golden red lentil curry gently simmered in creamy coconut milk, turmeric, "
+        "curry leaves, tempered mustard seeds, and garlic. It is high in plant protein and dietary fiber."
     ),
     "kottu": (
         "**Kottu Roti** is Sri Lanka's ultimate street food sensation: chopped godamba flatbread stir-fried on an iron griddle "
-        "with vegetables, eggs, spices, and rich curry sauce."
+        "with vegetables, eggs, spices, and rich curry gravy with an energetic culinary rhythm."
     ),
     "chicken curry": (
-        "**Sri Lankan Chicken Curry** (Kukul Mas Curry) is deeply aromatic, cooked with roasted Ceylon curry powder, "
-        "pandan leaves, lemongrass, and rich coconut milk."
+        "**Sri Lankan Chicken Curry** (Kukul Mas Curry) is deeply aromatic and robust, cooked with roasted Ceylon curry powder, "
+        "pandan leaves, lemongrass, ginger, garlic, and rich coconut milk."
+    ),
+    "ambul thiyal": (
+        "**Fish Ambul Thiyal** is an iconic Southern Sri Lankan dry fish curry prepared with Goraka paste, crushed black pepper, "
+        "and firm tuna, slow-simmered in an earthen clay pot until deep, sour, and intensely flavorful."
+    ),
+    "kaju curry": (
+        "**Cashew Nut Curry** (Kaju Curry) is a luxurious, creamy celebratory curry of tender whole raw cashews and sweet green peas "
+        "simmered in rich coconut milk and aromatic Ceylon spices."
+    ),
+    "kiribath": (
+        "**Kiribath** (Milk Rice) is an auspicious festive staple made by cooking white rice in thick salted coconut milk until creamy, "
+        "cut into traditional diamond cakes and paired with spicy Lunu Miris or Seeni Sambol."
+    ),
+    "polos": (
+        "**Polos Curry** is a slow-cooked young baby jackfruit curry celebrated for its meaty texture, cooked with dark roasted Ceylon spices, "
+        "Goraka, and coconut milk, offering exceptional dietary fiber."
+    ),
+    "wambatu moju": (
+        "**Wambatu Moju** is a treasured sweet, sour, and spicy eggplant pickle made from deep-fried brinjal slivers tossed with "
+        "mustard paste, shallots, green chilies, vinegar, and coconut sugar."
+    ),
+    "gotu kola": (
+        "**Gotu Kola Sambol** is a rejuvenating herbal salad made from finely shredded Centella asiatica leaves tossed with "
+        "fresh grated coconut, shallots, lime, and black pepper, prized for its memory and cognitive benefits."
     )
 }
 
