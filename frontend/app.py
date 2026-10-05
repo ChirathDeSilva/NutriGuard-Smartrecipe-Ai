@@ -16,6 +16,7 @@ import streamlit as st
 import requests
 
 from frontend.components.cards import render_recipe_card
+from frontend.utils import render_html
 
 st.set_page_config(
     page_title="NutriGuard AI — SmartRecipe",
@@ -190,7 +191,7 @@ hr {
 # ============================================================
 # HERO HEADER
 # ============================================================
-st.markdown("""
+render_html("""
 <div style="
     background: linear-gradient(135deg, #0d1117 0%, #111827 50%, #0d1117 100%);
     border: 1px solid rgba(212, 175, 55, 0.2);
@@ -200,45 +201,17 @@ st.markdown("""
     position: relative;
     overflow: hidden;
 ">
-    <!-- Gold glow top left -->
-    <div style="
-        position: absolute; top: -60px; left: -60px;
-        width: 200px; height: 200px;
-        background: radial-gradient(circle, rgba(212,175,55,0.12) 0%, transparent 70%);
-        pointer-events: none;
-    "></div>
-    <!-- Gold glow bottom right -->
-    <div style="
-        position: absolute; bottom: -60px; right: -60px;
-        width: 200px; height: 200px;
-        background: radial-gradient(circle, rgba(56,189,248,0.07) 0%, transparent 70%);
-        pointer-events: none;
-    "></div>
-
+    <div style="position: absolute; top: -60px; left: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(212,175,55,0.12) 0%, transparent 70%); pointer-events: none;"></div>
+    <div style="position: absolute; bottom: -60px; right: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(56,189,248,0.07) 0%, transparent 70%); pointer-events: none;"></div>
     <div style="display:flex; align-items:center; gap:14px; margin-bottom:10px;">
-        <div style="
-            background: linear-gradient(135deg, #d4af37, #b8932a);
-            border-radius: 14px;
-            width: 52px; height: 52px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 26px;
-            box-shadow: 0 4px 20px rgba(212,175,55,0.35);
-            flex-shrink:0;
-        ">🛡️</div>
+        <div style="background: linear-gradient(135deg, #d4af37, #b8932a); border-radius: 14px; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 4px 20px rgba(212,175,55,0.35); flex-shrink:0;">🛡️</div>
         <div>
-            <div style="
-                font-family: 'Playfair Display', serif;
-                font-size: 2rem; font-weight: 700;
-                background: linear-gradient(135deg, #f0d060 0%, #d4af37 50%, #b8932a 100%);
-                -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-                line-height: 1.1;
-            ">NutriGuard AI</div>
+            <div style="font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #f0d060 0%, #d4af37 50%, #b8932a 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1;">NutriGuard AI</div>
             <div style="color:#64748b; font-size:13px; font-weight:400; letter-spacing:0.04em; margin-top:3px;">
                 Precision Culinary Intelligence · Allergen-Safe · Real-Time Recipe AI
             </div>
         </div>
     </div>
-
     <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:16px;">
         <span style="background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.25);color:#d4af37;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0.05em;">🧠 NLP QUERY AGENT</span>
         <span style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.2);color:#38bdf8;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0.05em;">📚 BM25 + THEMEALDB</span>
@@ -247,7 +220,7 @@ st.markdown("""
         <span style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);color:#4ade80;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0.05em;">👨‍🍳 GEMINI CHEF</span>
     </div>
 </div>
-""", unsafe_allow_html=True)
+""")
 
 BACKEND_URL = "http://127.0.0.1:8000/api/chat"
 
@@ -255,7 +228,7 @@ BACKEND_URL = "http://127.0.0.1:8000/api/chat"
 # SIDEBAR
 # ============================================================
 with st.sidebar:
-    st.markdown("""
+    render_html("""
     <div style="
         background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(212,175,55,0.04) 100%);
         border: 1px solid rgba(212,175,55,0.18);
@@ -266,7 +239,7 @@ with st.sidebar:
         <div style="font-family:'Playfair Display',serif; font-size:15px; font-weight:600; color:#f0d060; margin-bottom:4px;">⚙️ Dietary Controls</div>
         <div style="font-size:11px; color:#475569; line-height:1.5;">All constraints enforced by the <strong style='color:#64748b;'>Zero-LLM Safety Guardrail</strong> — 100% deterministic.</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     diet_choice = st.selectbox(
         "🥗 Dietary Lifestyle",
@@ -301,13 +274,13 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-    st.markdown("""
+    render_html("""
     <div style="margin-top:16px; padding:12px; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid rgba(255,255,255,0.06);">
         <div style="font-size:11px; color:#475569; line-height:1.6;">
             📰 Visit <strong style='color:#64748b;'>News & Tips</strong> page from left sidebar for nutrition insights.
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 # ============================================================
 # CHAT STATE
@@ -330,11 +303,11 @@ if "messages" not in st.session_state or not st.session_state.messages:
 # ============================================================
 # QUICK PROMPT CHIPS
 # ============================================================
-st.markdown("""
+render_html("""
 <div style="margin-bottom:12px;">
     <span style="font-size:11px; font-weight:600; color:#475569; text-transform:uppercase; letter-spacing:0.08em;">⚡ Quick Prompts</span>
 </div>
-""", unsafe_allow_html=True)
+""")
 
 chips = [
     ("🍕", "Pizza", "how to make pizza"),

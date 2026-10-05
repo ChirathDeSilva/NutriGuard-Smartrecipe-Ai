@@ -8,6 +8,7 @@ Uses native Streamlit components with custom gold accents for maximum responsive
 from typing import Dict, Any
 import streamlit as st
 from frontend.components.charts import render_macro_chart
+from frontend.utils import render_html
 
 
 def render_recipe_card(data: Dict[str, Any], card_key: str):
@@ -40,7 +41,7 @@ def render_recipe_card(data: Dict[str, Any], card_key: str):
     origin_badge = "🇱🇰 Authentic Sri Lankan" if is_local else "🌍 Global Culinary Archive"
 
     # Luxury Card Header
-    st.markdown(f"""
+    render_html(f"""
     <div style="
         background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(255,255,255,0.02) 100%);
         border: 1px solid rgba(212,175,55,0.22);
@@ -79,7 +80,7 @@ def render_recipe_card(data: Dict[str, Any], card_key: str):
             ">⭐ {score_pct}% MATCH</div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # Metric Row
     c1, c2, c3, c4, c5, c6 = st.columns([1.1, 1.2, 1.1, 1.1, 1.1, 1.8])
@@ -162,7 +163,7 @@ def render_tip_card(tip: Dict[str, Any]):
     badge_bg = "rgba(16,185,129,0.1)" if is_tip else "rgba(245,158,11,0.1)"
     badge_border = "rgba(16,185,129,0.25)" if is_tip else "rgba(245,158,11,0.25)"
 
-    st.markdown(f"""
+    render_html(f"""
     <div style="
         background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(212,175,55,0.03) 100%);
         border: 1px solid rgba(212,175,55,0.16);
@@ -201,4 +202,4 @@ def render_tip_card(tip: Dict[str, Any]):
             TAGS: <span style="color: #64748b;">{tags}</span>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)

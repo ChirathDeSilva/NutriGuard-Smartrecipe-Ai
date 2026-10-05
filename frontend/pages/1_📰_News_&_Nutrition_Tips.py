@@ -16,6 +16,7 @@ if str(ROOT_DIR) not in sys.path:
 import streamlit as st
 import requests
 from frontend.components.cards import render_tip_card
+from frontend.utils import render_html
 
 st.set_page_config(
     page_title="NutriGuard — News & Nutrition Insights",
@@ -71,8 +72,7 @@ hr {
 </style>
 """, unsafe_allow_html=True)
 
-# Hero Header Banner
-st.markdown("""
+render_html("""
 <div style="
     background: linear-gradient(135deg, #0d1117 0%, #111827 50%, #0d1117 100%);
     border: 1px solid rgba(212, 175, 55, 0.2);
@@ -108,7 +108,7 @@ st.markdown("""
         <div style="color:#475569; font-size:11px;">Updated 2026 Edition</div>
     </div>
 </div>
-""", unsafe_allow_html=True)
+""")
 
 API_TIPS_URL = "http://127.0.0.1:8000/api/tips"
 
