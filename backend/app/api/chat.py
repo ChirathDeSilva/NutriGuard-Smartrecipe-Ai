@@ -150,7 +150,7 @@ async def chat_pipeline(request: UserQueryRequest, db: Session = Depends(get_db)
     # --------------------------------------------------------------------------
     if constraints.intent == "greeting":
         greeting_text = (
-            "👋 **Hello! Welcome to NutriGuard AI.**\n\n"
+            "**Welcome to NutriGuard AI**\n\n"
             "I am your personal culinary food safety and recipe recommendation assistant. "
             "Tell me what ingredients you have in your kitchen (e.g., *chicken, red lentils, coconut milk, shallots*), "
             "or what kind of dish you would like to prepare. I will search our recipe database, strictly verify "
@@ -165,7 +165,7 @@ async def chat_pipeline(request: UserQueryRequest, db: Session = Depends(get_db)
 
     if constraints.intent == "unrelated":
         unrelated_text = (
-            "⚠️ **Out of Scope Question:**\n\n"
+            "**Out of Scope Question:**\n\n"
             "I specialize exclusively in **food, recipes, cooking instructions, dietary lifestyles, and food allergy safety**.\n\n"
             "I cannot assist with unrelated topics like technology, politics, general chat, or finance. "
             "Please ask me about a recipe or tell me what ingredients you have to cook with!"
@@ -196,9 +196,9 @@ async def chat_pipeline(request: UserQueryRequest, db: Session = Depends(get_db)
             )
 
         answer = (
-            f"🍴 **Culinary Guide: {clean_food.title() if clean_food else 'Dish Information'}**\n\n"
+            f"**Culinary Guide: {clean_food.title() if clean_food else 'Dish Information'}**\n\n"
             f"{dish_desc}\n\n"
-            f"💡 *Would you like a healthy, allergy-safe recipe to make this at home? Tell me your preferred ingredients or dietary limits!*"
+            f"*Would you like a healthy, allergy-safe recipe to make this at home? Tell me your preferred ingredients or dietary limits!*"
         )
         return FinalAgentResponse(
             response_type="conversational",

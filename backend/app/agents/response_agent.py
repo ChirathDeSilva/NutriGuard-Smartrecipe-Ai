@@ -45,13 +45,13 @@ async def generate_response(ranked: RankedRecipe) -> FinalAgentResponse:
 
     if "Closest Match" in recipe.source or ing_pct < 30:
         why_selected_default = (
-            f"✨ **NutriGuard Chef Recommendation ({score_pct}% Fit):** Selected as our most versatile, "
+            f"**NutriGuard Chef Recommendation ({score_pct}% Fit):** Selected as our most versatile, "
             f"100% allergen-safe culinary dish ready in **{recipe.cooking_minutes} minutes**.{highlight_str} "
             f"Verified safe by NutriGuard Food Safety Guardrails."
         )
     else:
         why_selected_default = (
-            f"✨ **Top Match ({score_pct}% Confidence):** Selected for exceptional **{ing_pct}% ingredient alignment** "
+            f"**Top Match ({score_pct}% Confidence):** Selected for exceptional **{ing_pct}% ingredient alignment** "
             f"and 100% adherence to your allergen safety limits. Ready in **{recipe.cooking_minutes} minutes**.{highlight_str} "
             f"Verified safe by NutriGuard Food Safety Guardrails."
         )

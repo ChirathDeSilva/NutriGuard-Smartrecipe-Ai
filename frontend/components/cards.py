@@ -1,8 +1,9 @@
 """
 FRONTEND COMPONENT: Recipe & Nutrition Tip Cards
 ================================================
-Luxury Dark-Gold Design with Glassmorphism and Polished Typography.
-Uses native Streamlit components with custom gold accents for maximum responsiveness.
+Enterprise Light Theme (FlightSense Style).
+Clean white cards, crisp typography (Inter), soft slate borders,
+subtle shadows, and strictly ZERO emojis.
 """
 
 from typing import Dict, Any
@@ -13,13 +14,15 @@ from frontend.utils import render_html
 
 def render_recipe_card(data: Dict[str, Any], card_key: str):
     """
-    Renders an ultra-modern, luxury recipe recommendation card:
-    - Gold-accented dish title and origin badge
-    - Quick macronutrient indicator metrics
-    - Why selected explanation from Agent 5
-    - Formatted cooking steps
-    - Plotly macronutrient distribution (transparent dark-gold theme)
-    - 5-Agent weighted scoring breakdown audit
+    Renders an enterprise-grade recipe recommendation card:
+    - Clean white card with slate-200 border and subtle elevation
+    - Royal blue confidence match pill
+    - Verified allergen safety badge
+    - Standard macronutrient indicators
+    - Grounded culinary rationale
+    - Numbered cooking instructions
+    - Interactive Plotly macronutrient profile chart
+    - Zero emojis used across all components
     """
     title = data.get("recipe_title", "Recommended Dish")
     score = float(data.get("score", 0.0))
@@ -38,52 +41,69 @@ def render_recipe_card(data: Dict[str, Any], card_key: str):
 
     source_label = sources[0] if sources else "NutriGuard Knowledgebase"
     is_local = "Local" in source_label
-    origin_badge = "🇱🇰 Authentic Sri Lankan" if is_local else "🌍 Global Culinary Archive"
+    origin_badge = "Authentic Sri Lankan" if is_local else "Global Culinary Archive"
 
-    # Luxury Card Header
+    # Enterprise Card Header (Clean White / Royal Blue Accent)
     render_html(f"""
     <div style="
-        background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(255,255,255,0.02) 100%);
-        border: 1px solid rgba(212,175,55,0.22);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 14px;
-        padding: 16px 20px;
-        margin-bottom: 14px;
+        padding: 20px 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 12px;
     ">
         <div>
             <div style="
-                font-family: 'Playfair Display', serif;
-                font-size: 1.5rem;
+                font-size: 1.45rem;
                 font-weight: 700;
-                color: #f0d060;
-                letter-spacing: -0.3px;
-            ">🍲 {title}</div>
-            <div style="color: #64748b; font-size: 12px; margin-top: 3px;">
-                <span style="color: #cbd5e1; font-weight: 500;">{origin_badge}</span> &nbsp;·&nbsp;
-                <span>Source: <code style="color: #94a3b8; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">{source_label}</code></span>
+                color: #0f172a;
+                letter-spacing: -0.02em;
+                line-height: 1.2;
+            ">{title}</div>
+            <div style="color: #64748b; font-size: 12px; margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="
+                    background: #f1f5f9;
+                    color: #334155;
+                    font-weight: 600;
+                    padding: 3px 10px;
+                    border-radius: 999px;
+                    border: 1px solid #e2e8f0;
+                ">{origin_badge}</span>
+                <span>Source: <code style="color: #475569; background: #f8fafc; padding: 2px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">{source_label}</code></span>
             </div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <div style="
-                background: linear-gradient(135deg, #d4af37, #b8932a);
-                color: #0d1117;
+                background: #eff6ff;
+                border: 1px solid #bfdbfe;
+                color: #1d4ed8;
                 padding: 6px 14px;
-                border-radius: 20px;
-                font-weight: 800;
+                border-radius: 999px;
+                font-weight: 700;
                 font-size: 13px;
-                letter-spacing: 0.04em;
-                box-shadow: 0 2px 10px rgba(212,175,55,0.3);
-            ">⭐ {score_pct}% MATCH</div>
+                letter-spacing: 0.02em;
+            ">{score_pct}% Match Score</div>
+            <div style="
+                background: #f0fdf4;
+                border: 1px solid #bbf7d0;
+                color: #15803d;
+                padding: 6px 14px;
+                border-radius: 999px;
+                font-weight: 600;
+                font-size: 12px;
+            ">Allergen Verified</div>
         </div>
     </div>
     """)
 
-    # Metric Row
-    c1, c2, c3, c4, c5, c6 = st.columns([1.1, 1.2, 1.1, 1.1, 1.1, 1.8])
+    # Metric Row (6 Clean Cards)
+    c1, c2, c3, c4, c5, c6 = st.columns([1.1, 1.2, 1.1, 1.1, 1.1, 1.6])
     with c1:
         st.metric(label="Match", value=f"{score_pct}%")
     with c2:
@@ -95,21 +115,21 @@ def render_recipe_card(data: Dict[str, Any], card_key: str):
     with c5:
         st.metric(label="Fats", value=f"{fat}g")
     with c6:
-        st.success("🛡️ 100% Allergen Safe")
+        st.metric(label="Safety Status", value="Verified Safe")
 
-    # Why Selected Callout Box
-    st.info(f"{why_selected}")
+    # Clean Callout Box (Why Selected)
+    st.info(why_selected)
 
     # Allergen Warnings if any
     if warnings:
         for w in warnings:
-            st.warning(f"⚠️ {w}")
+            st.warning(f"Safety Advisory: {w}")
 
-    # Tabs for Instructions, Nutrition & Match Score Audit
+    # Tabs for Instructions, Nutrition & Match Score Audit (Zero emojis)
     tab_instructions, tab_nutrition, tab_audit = st.tabs([
-        "📝 Step-by-Step Instructions",
-        "📊 Nutrition & Macronutrients",
-        "🔍 Multi-Agent Score Audit"
+        "Preparation Instructions",
+        "Macronutrient Profile",
+        "Multi-Agent Scoring Audit"
     ])
 
     with tab_instructions:
@@ -124,55 +144,56 @@ def render_recipe_card(data: Dict[str, Any], card_key: str):
             else:
                 st.write("Macronutrient breakdown not available.")
         with col_summary:
-            st.markdown("##### 🥗 Macro Summary")
+            st.markdown("##### Nutritional Summary")
             st.markdown(
                 f"""
                 - **Calories:** `{cals} kcal`
-                - **Protein:** `{protein} g` *(Muscle recovery & satiety)*
-                - **Carbohydrates:** `{carbs} g` *(Clean sustained energy)*
-                - **Fats:** `{fat} g` *(Essential cellular lipids)*
+                - **Protein:** `{protein} g` (Essential amino acids)
+                - **Carbohydrates:** `{carbs} g` (Sustained energy)
+                - **Fats:** `{fat} g` (Dietary lipids)
                 """
             )
             st.caption("Standardized nutritional estimate per single adult serving.")
 
     with tab_audit:
-        st.markdown("##### 🤖 5-Agent Weighted Scoring Breakdown")
+        st.markdown("##### Multi-Factor Weighted Scoring Breakdown")
         if breakdown:
             cols = st.columns(len(breakdown))
             for i, (factor, val) in enumerate(breakdown.items()):
                 with cols[i]:
                     label_clean = factor.replace("_", " ").title()
                     st.metric(label=label_clean, value=f"{int(val * 100)}%")
-        st.caption("Audited by Agent 3 (Safety Guardrail) and optimized by Agent 4 (Linear Weighted Multi-Factor Ranking).")
+        st.caption("Audited by Agent 3 (Safety Guardrail) and scored by Agent 4 (Multi-Factor Linear Ranking).")
 
 
 def render_tip_card(tip: Dict[str, Any]):
     """
-    Renders an attractive luxury nutrition tip or food safety news card.
+    Renders an enterprise-grade nutrition tip or food safety news card.
+    Zero emojis used.
     """
     title = tip.get("title", "")
     summary = tip.get("summary", "")
     content = tip.get("content", "")
     category = tip.get("category", "tip")
-    author = tip.get("author", "NutriGuard Editorial")
+    author = tip.get("author", "NutriGuard Editorial Board")
     tags = tip.get("tags", "")
 
     is_tip = category == "tip"
-    badge_label = "🌿 NUTRITION INSIGHT" if is_tip else "📢 FOOD SAFETY ADVISORY"
-    badge_color = "#10b981" if is_tip else "#f59e0b"
-    badge_bg = "rgba(16,185,129,0.1)" if is_tip else "rgba(245,158,11,0.1)"
-    badge_border = "rgba(16,185,129,0.25)" if is_tip else "rgba(245,158,11,0.25)"
+    badge_label = "Nutrition Research" if is_tip else "Food Safety Advisory"
+    badge_color = "#0284c7" if is_tip else "#d97706"
+    badge_bg = "#f0f9ff" if is_tip else "#fffbeb"
+    badge_border = "#bae6fd" if is_tip else "#fde68a"
 
     render_html(f"""
     <div style="
-        background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(212,175,55,0.03) 100%);
-        border: 1px solid rgba(212,175,55,0.16);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 14px;
-        padding: 20px 24px;
+        padding: 22px 26px;
         margin-bottom: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
     ">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <span style="
                 background: {badge_bg};
                 border: 1px solid {badge_border};
@@ -181,25 +202,26 @@ def render_tip_card(tip: Dict[str, Any]):
                 border-radius: 999px;
                 font-size: 11px;
                 font-weight: 700;
-                letter-spacing: 0.06em;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
             ">{badge_label}</span>
-            <span style="color: #64748b; font-size: 12px;">By <strong style="color: #94a3b8;">{author}</strong></span>
+            <span style="color: #64748b; font-size: 12px;">Authored by <strong style="color: #334155;">{author}</strong></span>
         </div>
         <div style="
-            font-family: 'Playfair Display', serif;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
-            color: #f0d060;
+            color: #0f172a;
             margin-bottom: 8px;
+            letter-spacing: -0.01em;
         ">{title}</div>
-        <div style="color: #94a3b8; font-size: 13px; font-style: italic; margin-bottom: 12px; line-height: 1.5;">
-            "{summary}"
+        <div style="color: #64748b; font-size: 13.5px; margin-bottom: 12px; line-height: 1.5;">
+            {summary}
         </div>
-        <div style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 12px;">
+        <div style="color: #334155; font-size: 14px; line-height: 1.6; margin-bottom: 12px;">
             {content}
         </div>
-        <div style="color: #475569; font-size: 11px; font-family: monospace;">
-            TAGS: <span style="color: #64748b;">{tags}</span>
+        <div style="color: #94a3b8; font-size: 11px; font-family: monospace;">
+            TOPICS: <span style="color: #64748b;">{tags}</span>
         </div>
     </div>
     """)
